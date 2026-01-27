@@ -1,0 +1,107 @@
+from random import shuffle
+
+CLUB_NAMES = [
+    "Red Lions",
+    "AFC Tigers",
+    "The Eagles",
+    "Wolves",
+    "Black Cats",
+    "White Bulls",
+    "Silverstone",
+    "Dragonflies FC",
+    "Purple Dragons",
+    "Urban Rats",
+    "Hawkshill Rovers",
+    "Mountain Valley",
+    "Riverside",
+    "Forest FC",
+    "Club Dolphins",
+    "The Falcons",
+    "Dark Valley",
+    "The Iguanas",
+    "The Coyotes",
+    "Prairie Dogs FC",
+    "Moongoose United",
+    "The Stallions",
+    "Redwood Rangers",
+    "Trentishoe",
+    "Cedar City FC",
+    "Maple Leafs",
+    "Oakwood Wanderers",
+    "Pine Hill FC",
+    "Birchwood United",
+    "Willowbrook",
+    "Ashford Athletic",
+    "Elm City FC",
+    "Hawthorn Rovers",
+    "Sycamore Stars",
+    "Chestnut Champions",
+    "Poplar FC",
+    "Cypress City",
+    "Magnolia United",
+    "Sequoia Strikers",
+    "Juniper Jets",
+    "Dogwood Dynamos",
+    "Palm Beach FC",
+    "Baobab Battalion",
+    "Acacia Aces",
+    "Eucalyptus Eagles",
+    "Fir Fighters",
+    "Hemlock Heroes",
+    "Larch Legends",
+    "Yew Youth",
+    "Olive Olympians",
+    "Cedarwood Cyclones",
+    "Hickory Hawks",
+    "Tamarack Titans",
+    "Aspen Avengers",
+    "Banyan Bears",
+    "Catalpa Crusaders",
+    "Ginkgo Giants",
+    "City Spartans",
+    "Metro Mariners",
+    "Urban United",
+    "Suburbia SC",
+    "Downtown Dynamos",
+    "Uptown United",
+    "Central City FC",
+]
+
+
+class Club:
+    def __init__(self, name):
+        self.name = name
+
+    def __str__(self):
+        return f"Club: {self.name}"
+
+
+class ClubFactory:
+    @staticmethod
+    def create_club(name):
+        return Club(name)
+
+    @staticmethod
+    def create_clubs(count: int):
+        names = list(CLUB_NAMES)
+        shuffle(names)
+        names = names[:count]
+        return [Club(name) for name in names]
+
+
+class ClubPool:
+    def __init__(self):
+        self.clubs = set()
+
+    def add_club(self, club: Club):
+        self.clubs.add(club)
+
+    def remove_club(self, club: Club):
+        self.clubs.discard(club)
+
+    def get_all_clubs(self):
+        return list(self.clubs)
+
+    @property
+    def count(self):
+        return len(self.clubs)
