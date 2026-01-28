@@ -231,9 +231,13 @@ def create_world() -> World:
     league_prem.clubs = all_clubs[:16]
     world.competitions.append(league_prem)
 
-    # league_champ = League("Championship", "CH")
-    # league_champ.clubs = all_clubs[16:32]
-    # world.competitions.append(league_champ)
+    league_champ = League("Championship", "CH")
+    league_champ.clubs = all_clubs[16:32]
+    world.competitions.append(league_champ)
+
+    cup = Cup("League Cup", "LC")
+    cup.clubs = all_clubs[:32]
+    world.competitions.append(cup)
 
     return world
 
@@ -248,6 +252,7 @@ class GameState(Enum):
 @unique
 class GameView(Enum):
     MainView = auto()
+    ClubsView = auto()
     FixtureView = auto()
     ResultView = auto()
     LeagueTableView = auto()
@@ -333,6 +338,23 @@ def app_main():
                             messages.append(blank_line)
                             messages.extend([f" {line} ".ljust(line_length, " ") for line in ltw.table_text()])     
 
+                    elif game_loop_state.view == GameView.ClubsView:
+                        clubs_in_list = 15
+                        all_clubs = world_worker.world.club_pool.get_all_clubs()
+                        all_clubs =[str(c.name).ljust(25) for c in all_clubs]
+                        club_lists = [all_clubs[i:i+20] for i in range(0, len(all_clubs), clubs_in_list)]
+                        max_size = max([len(l) for l in club_lists])
+
+                        for i in range(0, max_size):
+                            text = []
+                            for l in club_lists:
+                                try:
+                                    name = l[i]
+                                    text.append(name)
+                                except IndexError:
+                                    pass             
+                            messages.append(" ".join(text))               
+
                 elif game_loop_state.state == GameState.Current_Fixtures:
                     if game_loop_state.current_fixtures:
                         messages.append(f"Fixtures for Week {world.world_time.week}: {len(game_loop_state.current_fixtures)}")  
@@ -383,7 +405,18 @@ def app_main():
                     # State machine transitions
                     if game_loop_state.state == GameState.Continue:
                         if game_loop_state.view == GameView.MainView:
-                            if user_input == "":
+                            if user_input == "t":
+                                leagues = [comp for comp in world.competitions if comp.type == CompetitionType.LEAGUE]
+                                league = leagues[0] if leagues else None
+
+                                game_loop_state.view = GameView.LeagueTableView
+                                game_loop_state.view_data = {"league": league}
+
+                            elif user_input == "c":
+                                game_loop_state.view = GameView.ClubsView
+                                game_loop_state.view_data = None
+
+                            elif user_input == "":
                                 current_week_fixtures = world_worker.get_current_fixtures()
                                 if current_week_fixtures:
                                     game_loop_state.state = GameState.Current_Fixtures
@@ -391,14 +424,21 @@ def app_main():
                                 else:
                                     game_loop_state.reset()
                                     world.world_time.advance_week()
-                            elif user_input == "t":
-                                leagues = [comp for comp in world.competitions if comp.type == CompetitionType.LEAGUE]
-                                league = leagues[0] if leagues else None
-
-                                game_loop_state.view = GameView.LeagueTableView
-                                game_loop_state.view_data = {"league": league}
+                            
 
                         elif game_loop_state.view == GameView.LeagueTableView:
+                            try:
+                                index = int(user_input)
+                                leagues = [comp for comp in world.competitions if comp.type == CompetitionType.LEAGUE]
+                                index = (index - 1) % len(leagues)
+                                league = leagues[index] if leagues else None
+                                game_loop_state.view_data = {"league": league}
+
+                            except ValueError:
+                                game_loop_state.view = GameView.MainView
+                                game_loop_state.view_data = None
+
+                        elif game_loop_state.view == GameView.ClubsView:
                             game_loop_state.view = GameView.MainView
                             game_loop_state.view_data = None
                 
