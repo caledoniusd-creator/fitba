@@ -1,4 +1,3 @@
-
 from typing import List, Dict
 
 from .club import Club
@@ -40,13 +39,13 @@ class LeagueTableEntry:
             f"{self.lost:3d}",
             f"{self.goals_for:3d}",
             f"{self.goals_against:3d}",
-            f"{self.points:3d}"
+            f"{self.points:3d}",
         ]
         return "| " + " | ".join(parts) + " |"
 
 
 class LeagueTableWorker:
-    def __init__(self, competition: 'League', results: List[Result]):
+    def __init__(self, competition: "League", results: List[Result]):
         self.competition = competition
         self.results = results
         self.table_entries: Dict[Club, LeagueTableEntry] = {}
@@ -67,16 +66,19 @@ class LeagueTableWorker:
     def get_sorted_table(self):
         return sorted(
             self.table_entries.values(),
-            key=lambda entry: (entry.points, entry.goals_for - entry.goals_against, entry.goals_for),
-            reverse=True
+            key=lambda entry: (
+                entry.points,
+                entry.goals_for - entry.goals_against,
+                entry.goals_for,
+            ),
+            reverse=True,
         )
-    
+
     def table_text(self):
         columns = ["-" * 24, "---", "---", "---", "---", "---", "---", "---"]
         separator = "|-" + "-|-".join(columns) + "-|"
         top_line = separator.replace("|", "-")
         title = f"{self.competition.name}".center(len(top_line), " ")
-
 
         titles = ["Club".rjust(24), "Ply", " W ", " D ", " L ", " GF", " GA", "Pts"]
         lines = [title, top_line, "| " + " | ".join(titles) + " |", separator]

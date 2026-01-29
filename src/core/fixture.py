@@ -6,13 +6,14 @@ from .competition import Competition
 
 CLUB_NAME_SIZE = 24
 
+
 @dataclass(frozen=True)
 class Fixture:
     club1: Club
     club2: Club
     competition: Competition
     round_num: int = 0
-    
+
     def competition_text(self):
         competition_str = f"{self.competition.shortname}"
         if self.round_num > 0:
@@ -30,4 +31,3 @@ class Result(Fixture):
 
     def __str__(self):
         return f"{self.competition_text().ljust(12)} {self.club1.name.rjust(CLUB_NAME_SIZE)}  {self.home_score}-{self.away_score}  {self.club2.name.ljust(CLUB_NAME_SIZE)}"
-

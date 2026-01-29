@@ -1,6 +1,10 @@
-
-
 from os import system, name
+
+
+# UI Constants
+line_length = 80
+max_lines = 25
+seperator, blank_line = "=" * line_length, " " * line_length
 
 
 def clear_console():

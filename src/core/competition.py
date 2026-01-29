@@ -11,7 +11,7 @@ class CompetitionType(Enum):
 class Competition:
     def __init__(self, name, shortname, comp_type: CompetitionType):
         self.name = name
-        self.shortname = shortname  
+        self.shortname = shortname
         self.type = comp_type
         self.clubs = []
 
