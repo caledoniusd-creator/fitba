@@ -11,10 +11,10 @@ from core.competition import CompetitionType, League, Cup
 from core.fixture import Fixture, Result
 from core.league_table import LeagueTableWorker
 
-from core.world import World, WorldWorker
+from core.world import World, create_test_world, WorldWorker
 
 from cli.cli import clear_console
-
+from gui.gui_main import run_gui_application
 
 
 
@@ -51,30 +51,6 @@ class GameLoopState:
 
 
 
-def create_world() -> World:    
-    world = World(WorldTime(1, 1))
-    for club in ClubFactory.create_clubs(40):
-        world.club_pool.add_club(club)
-
-    all_clubs = world.club_pool.get_all_clubs()
-    shuffle(all_clubs)
-
-    league_prem = League("Premier League", "PL")
-    league_prem.clubs = all_clubs[:16]
-    world.competitions.append(league_prem)
-
-    league_champ = League("Championship", "CH")
-    league_champ.clubs = all_clubs[16:32]
-    world.competitions.append(league_champ)
-
-    cup = Cup("League Cup", "LC")
-    cup.clubs = all_clubs[:32]
-    world.competitions.append(cup)
-
-    return world
-
-
-
 def app_main():
 
     try:
@@ -82,7 +58,7 @@ def app_main():
         create_or_load = "create"  # For now, always create new game
         if create_or_load == "create":
             # Create World
-            world = create_world()
+            world = create_test_world()
             
         elif create_or_load == "load":
             # Load World
@@ -276,4 +252,5 @@ def app_main():
 
 
 if __name__ == "__main__":
-    app_main()
+    # app_main()
+    run_gui_application()

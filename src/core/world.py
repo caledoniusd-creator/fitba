@@ -1,11 +1,11 @@
 from dataclasses import dataclass
-from random import choices
+from random import choices, shuffle
 from typing import Optional, List
 
 from .world_time import WEEKS_IN_YEAR, WorldTime
 from .calendars import Season
-from .club import ClubPool
-from .competition import CompetitionType, Competition
+from .club import ClubPool, ClubFactory
+from .competition import CompetitionType, Competition, League, Cup
 from .leagues import league_30_fixtures, create_league_fixtures
 from .fixture import Fixture, Result
 
@@ -26,6 +26,29 @@ class World:
 
     def __str__(self):
         return f"World Time -> {self.world_time}"
+
+
+def create_test_world() -> World:    
+    world = World(WorldTime(1, 1))
+    for club in ClubFactory.create_clubs(40):
+        world.club_pool.add_club(club)
+
+    all_clubs = world.club_pool.get_all_clubs()
+    shuffle(all_clubs)
+
+    league_prem = League("Premier League", "PL")
+    league_prem.clubs = all_clubs[:16]
+    world.competitions.append(league_prem)
+
+    league_champ = League("Championship", "CH")
+    league_champ.clubs = all_clubs[16:32]
+    world.competitions.append(league_champ)
+
+    cup = Cup("League Cup", "LC")
+    cup.clubs = all_clubs[:32]
+    world.competitions.append(cup)
+
+    return world
 
 
 class WorldWorker:
@@ -94,3 +117,6 @@ class WorldWorker:
                 next_week, []
             )
         return next_week, fixtures
+
+
+
