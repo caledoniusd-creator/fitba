@@ -12,14 +12,8 @@ from core.competition import CompetitionType, Competition, Friendly, League, Cup
 from core.fixture import Fixture, Result
 from core.league_table import LeagueTableWorker
 
+from cli.cli import clear_console
 
-WEEKS_IN_YEAR = 52
-
-def clear_console():
-    """
-    Clears the console screen (OS agnostic).
-    """
-    system("cls" if name == "nt" else "clear")
 
 
 league_30_fixtures = [8, 9, 10, 11, 12, 14, 15, 16, 17, 18, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 35, 36, 37, 38, 39, 42, 43, 44, 45, 46]
