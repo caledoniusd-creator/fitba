@@ -64,7 +64,7 @@ class WidgetList(QWidget):
         self.update_visibility()
 
 
-class PagesDialog(QDialog):
+class PagesWidget(QWidget):
     def __init__(self, title: str, pages: List[QWidget], parent=None):
         super().__init__(parent=parent)
         self._title = title
@@ -79,7 +79,7 @@ class PagesDialog(QDialog):
         btn_next = QToolButton()
         btn_next.setText("\u27A1")
         btn_next.clicked.connect(self.on_next)
-        
+
         btn_layout = QHBoxLayout()
         btn_layout.addStretch(100)
         btn_layout.addWidget(btn_back)
@@ -106,3 +106,15 @@ class PagesDialog(QDialog):
     def on_next(self):
         ix = (self._stack.currentIndex() + 1) % self._stack.count()
         self._stack.setCurrentIndex(ix)
+
+
+class PagesDialog(QDialog):
+    def __init__(self, title: str, pages: List[QWidget], parent=None):
+        super().__init__(parent=parent)
+        self.pages = PagesWidget(title=title, pages=pages)
+      
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.pages, 1)
+
+
+ 

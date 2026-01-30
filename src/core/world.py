@@ -77,7 +77,7 @@ class WorldWorker:
             for ix, round_fixtures in enumerate(create_league_fixtures(competition, reverse_fixtures=True)):
                 fixture_calendar.add_objects(league_30_fixtures[ix], round_fixtures)
 
-    def process_post_season(self):
+    def _promotion_and_relegation(self):
         all_teams = set(self.world.club_pool.get_all_clubs())
         leagues = [comp for comp in self.world.competitions if comp.type == CompetitionType.LEAGUE]
         league_clubs = []
@@ -123,6 +123,9 @@ class WorldWorker:
                 text += f" add to {data[2].name}"
                 data[2].clubs.append(data[0])
             print(text)
+            
+    def process_post_season(self):
+        self._promotion_and_relegation()
 
     def get_current_fixtures(self):
         week_num = self.world.world_time.week
