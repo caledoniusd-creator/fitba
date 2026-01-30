@@ -7,7 +7,8 @@ from PyQt6.QtWidgets import *
 from core.world import WorldState, WorldStateEngine
 
 from .utils import change_font
-from .view_widgets import WorldTimeLabel, SeasonWeekScroll, FixtureList, ResultsList
+from .view_widgets import WorldTimeLabel, FixtureList, ResultsList
+from .week_view import SeasonWeekScroll
 
 
 class ViewBase(QWidget):
