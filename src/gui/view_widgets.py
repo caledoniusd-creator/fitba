@@ -7,10 +7,12 @@ from PyQt6.QtWidgets import *
 
 
 from core.world_time import DAYS_IN_WEEK, WEEKS_IN_YEAR, WorldTime
+from core.competition import League
 from core.fixture import Fixture, Result
 
 
 from .utils import change_font
+from .generic_widgets import WidgetList
 
 
 class WorldTimeLabel(QLabel):
@@ -66,51 +68,91 @@ class ResultLabel(FixtureLabel):
         self.vs_label.setText(f" {result.home_score} - {result.away_score} ")
 
 
-class WidgetList(QWidget):
-    def __init__(self, title: str, parent=None):
-        super().__init__(parent)
-        self._widgets = []
-        self.widget_layout = QVBoxLayout()
-
-        title_lbl = QLabel(title)
-        change_font(title_lbl, 2, True)
-        
-        main_layout = QVBoxLayout(self)
-        main_layout.addWidget(title_lbl, 0, Qt.AlignmentFlag.AlignCenter)
-        main_layout.addLayout(self.widget_layout)
-        main_layout.addStretch(10)
-
-    @property
-    def has_widgets(self):
-        return True if self._widgets else False
-
-    def clear_widgets(self):
-        for w in self._widgets:
-            self.widget_layout.removeWidget(w)
-            w.deleteLater()
-        self._widgets.clear()
-
-    def set_widgets(self, widgets: List[QWidget]=[]):
-        self.clear_widgets()
-        for w in widgets:
-            self._widgets.append(w)
-            self.widget_layout.addWidget(w, 0, Qt.AlignmentFlag.AlignHCenter| Qt.AlignmentFlag.AlignTop)
-        self.setVisible(True if self.has_widgets else False)
-
-
 class FixtureList(WidgetList):
-    def __init__(self, parent=None):
-        super().__init__("Fixtures", parent)
+    def __init__(self, auto_hide: bool=False, parent=None):
+        super().__init__("Fixtures", auto_hide=auto_hide, parent=parent)
 
     def set_fixtures(self, fixtures: List[Fixture]=[]):
         self.set_widgets([FixtureLabel(f) for f in fixtures])  
         
 
 class ResultsList(WidgetList):
-    def __init__(self, parent=None):
-        super().__init__("Results", parent)
+    def __init__(self, auto_hide: bool=False, parent=None):
+        super().__init__("Results", auto_hide=auto_hide, parent=parent)
 
     def set_results(self, results: List[Result]=[]):
         self.set_widgets([ResultLabel(r) for r in results])  
 
                 
+
+class LeagueTableWidget(QFrame):
+    def __init__(self, competition: League, table_data: List, parent=None):
+        super().__init__(parent)
+        self.setFrameStyle(QFrame.Shape.Box | QFrame.Shadow.Plain)
+        table_layout = QGridLayout()
+
+        change_font(self, 2)
+
+        left_edge = 0
+        num_col = 1
+        club_col = 2
+        played = 3
+        won = 4
+        draw = 5
+        loss = 6
+        gf = 7
+        ga = 8
+        gd = 9
+        points = 10
+        right_edge = 11 
+
+        def number_label(num: int):
+            lbl = QLabel(str(num))
+            lbl.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+            change_font(lbl, 0, True)
+            return lbl
+        
+        def title_label(text: str):
+            lbl = QLabel(text)
+            lbl.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+            change_font(lbl, 0, True)
+            return lbl
+
+        table_layout.addWidget(title_label("Ply"), 0, played, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        table_layout.addWidget(title_label("W"), 0, won, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        table_layout.addWidget(title_label("D"), 0, draw, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        table_layout.addWidget(title_label("L"), 0, loss, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        table_layout.addWidget(title_label("GF"), 0, gf, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        table_layout.addWidget(title_label("GA"), 0, ga, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        table_layout.addWidget(title_label("GD"), 0, gd, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        table_layout.addWidget(title_label("Pts}"), 0, points, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+
+        row_ix = 0
+        for ix, row in enumerate(table_data):
+            club_lbl = QLabel(row.club.name)
+            club_lbl.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            row_ix += 1
+            table_layout.addWidget(number_label(ix + 1), row_ix, num_col, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+            table_layout.addWidget(club_lbl, row_ix, club_col, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            table_layout.addWidget(QLabel(str(row.played)), row_ix, played, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+            table_layout.addWidget(QLabel(str(row.won)), row_ix, won, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+            table_layout.addWidget(QLabel(str(row.drawn)), row_ix, draw, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+            table_layout.addWidget(QLabel(str(row.lost)), row_ix, loss, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+            table_layout.addWidget(QLabel(str(row.goals_for)), row_ix, gf, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+            table_layout.addWidget(QLabel(str(row.goals_against)), row_ix, ga, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+            table_layout.addWidget(QLabel(str(row.goal_diff)), row_ix, gd, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+            table_layout.addWidget(QLabel(str(row.points)), row_ix, points, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        row_ix += 1
+        table_layout.setRowStretch(row_ix, 100)
+        table_layout.setColumnStretch(left_edge, 100)
+        table_layout.setColumnStretch(right_edge, 100)
+
+        league_title_label = QLabel(competition.name)
+        league_title_label.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+        change_font(league_title_label, 2, True)
+
+        layout = QVBoxLayout(self)
+        layout.addWidget(league_title_label, 0, Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+        layout.addLayout(table_layout)
+
+

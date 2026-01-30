@@ -75,8 +75,9 @@ class GUIApplication(QApplication):
 
     def run(self):
         # print("Styles: " + ", ".join(QStyleFactory.keys()))
-        QApplication.setStyle(QStyleFactory.create("Windows"))
-
+        # QApplication.setStyle(QStyleFactory.create("Windows"))
+        QApplication.setStyle(QStyleFactory.create("Fusion"))
+        
         self.widget = AppMainWindow()
         self.widget.show()
         

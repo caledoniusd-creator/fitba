@@ -4,10 +4,14 @@ from PyQt6.QtGui import *
 from PyQt6.QtWidgets import *
 
 
+from core.competition import CompetitionType
+from core.league_table import LeagueTableWorker
 from core.world import WorldState, WorldStateEngine
 
+
 from .utils import change_font
-from .view_widgets import WorldTimeLabel, FixtureList, ResultsList
+from .generic_widgets import PagesDialog
+from .view_widgets import WorldTimeLabel, FixtureList, ResultsList, LeagueTableWidget
 from .week_view import SeasonWeekScroll
 
 
@@ -90,50 +94,58 @@ class GameViewTopBar(QFrame):
 
 class GameCenterWidget(QFrame):
 
+    show_tables = pyqtSignal(name="show tables")
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setFrameStyle(QFrame.Shape.Box | QFrame.Shadow.Sunken)
-        self._fixtures = FixtureList()
-        self._results = ResultsList()
+
+        self.clubs_btn = QPushButton("Clubs")
+        self.competition_btn = QPushButton("Competitions")
+        self.table_btn = QPushButton("Tables")
+        self.table_btn.clicked.connect(self.show_tables)
+        # self.clubs_btn = QPushButton("Clubs")
+
+        btn_frame = QFrame()
+        btn_frame.setFrameStyle(QFrame.Shape.Box | QFrame.Shadow.Plain)
+        button_layout = QHBoxLayout(btn_frame)
+
+        for w in [self.clubs_btn, self.competition_btn, self.table_btn]:
+            button_layout.addWidget(w, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        button_layout.addStretch(100)
+        btn_frame.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         
-        self._fixtures.setVisible(False)
-        self._results.setVisible(False)
+        self._fixtures = FixtureList(auto_hide=True)
+        self._results = ResultsList(auto_hide=True)
 
         self._main_layout = QVBoxLayout(self)
-        self._main_layout.addWidget(self._fixtures)
-        self._main_layout.addWidget(self._results)
+        self._main_layout.addWidget(btn_frame, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        self._main_layout.addWidget(self._fixtures, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        self._main_layout.addWidget(self._results, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        self._main_layout.addStretch(10)
 
     def invalidate(self, world_engine: WorldStateEngine | None):
         if world_engine.state.value == WorldState.AwaitingContinue.value:
             current_fixtures = world_engine.world_worker.get_current_fixtures()
             self._fixtures.set_fixtures(current_fixtures)
-            self._results.set_results()
+            self._results.clear_widgets()
 
         elif world_engine.state.value == WorldState.NewSeason.value:
-            self._fixtures.set_fixtures()
-            self._results.set_results()
+            self._fixtures.clear_widgets()
+            self._results.clear_widgets()
 
         elif world_engine.state.value == WorldState.PostSeason.value:
-            self._fixtures.set_fixtures()
-            self._results.set_results()
+            self._fixtures.clear_widgets()
+            self._results.clear_widgets()
 
         elif world_engine.state.value == WorldState.PreFixtures.value:
             self._fixtures.set_fixtures(world_engine.fixtures)
-            self._results.set_results()
+            self._results.clear_widgets()
 
         elif world_engine.state.value == WorldState.PostFixtures.value:
             self._results.set_results(world_engine.results)
-            self._fixtures.set_fixtures()
+            self._fixtures.clear_widgets()
 
-        # if world_engine.state.value in [WorldState.AwaitingContinue.value, WorldState.PreFixtures.value]:
-        #     current_fixtures =  world_engine.world_worker.get_current_fixtures()
-        #     self._fixtures.set_fixtures(current_fixtures)
-        # else:
-        #     self._fixtures.set_fixtures([])
-        #     self._results.set_results([])
-        
-        # if world_engine.state.value == WorldState.PostFixtures.value:
-        #     self._results.set_results(world_engine.results)
 
 
 class GameCentralView(QStackedWidget):
@@ -159,6 +171,7 @@ class GameView(ViewBase):
         self.world_time_lbl = WorldTimeLabel()
         self.season_scroll = SeasonWeekScroll()
         self.central_view = GameCenterWidget()
+        self.central_view.show_tables.connect(self.on_show_tables)
         
        
         mid_layout = QHBoxLayout()
@@ -203,3 +216,20 @@ class GameView(ViewBase):
             self.main_menu.emit()
         else:
             super().keyReleaseEvent(event)
+
+    def on_show_tables(self):
+        print("show tables")
+
+        widgets = []
+        leagues = [comp for comp in self._world_engine.world.competitions if comp.type.value == CompetitionType.LEAGUE.value]
+        for league in leagues:
+            ltw = LeagueTableWorker(league, self._world_engine.world_worker.results_for_competition(league))
+            table_data = ltw.get_sorted_table()
+            widget = LeagueTableWidget(league, table_data)
+            widgets.append(widget)
+
+        if leagues:
+            dlg = PagesDialog("Leagues", widgets, self)
+            dlg.exec()
+
+        

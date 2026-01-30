@@ -16,6 +16,10 @@ class LeagueTableEntry:
         self.goals_against = 0
         self.points = 0
 
+    @property
+    def goal_diff(self):
+        return self.goals_for - self.goals_against
+
     def record_result(self, goals_for: int, goals_against: int):
         self.played += 1
         self.goals_for += goals_for
@@ -68,7 +72,7 @@ class LeagueTableWorker:
             self.table_entries.values(),
             key=lambda entry: (
                 entry.points,
-                entry.goals_for - entry.goals_against,
+                entry.goal_diff,
                 entry.goals_for,
             ),
             reverse=True,
