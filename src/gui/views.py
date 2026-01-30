@@ -223,12 +223,15 @@ class GameView(ViewBase):
         widgets = []
         leagues = [comp for comp in self._world_engine.world.competitions if comp.type.value == CompetitionType.LEAGUE.value]
         for league in leagues:
-            ltw = LeagueTableWorker(league, self._world_engine.world_worker.results_for_competition(league))
-            table_data = ltw.get_sorted_table()
-            widget = LeagueTableWidget(league, table_data)
-            widgets.append(widget)
+            try:
+                ltw = LeagueTableWorker(league, self._world_engine.world_worker.results_for_competition(league))
+                table_data = ltw.get_sorted_table()
+                widget = LeagueTableWidget(league, table_data)
+                widgets.append(widget)
+            except KeyError:
+                pass
 
-        if leagues:
+        if widgets:
             dlg = PagesDialog("Leagues", widgets, self)
             dlg.exec()
 

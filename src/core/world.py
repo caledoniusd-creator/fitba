@@ -80,47 +80,42 @@ class WorldWorker:
     def process_post_season(self):
         all_teams = set(self.world.club_pool.get_all_clubs())
         leagues = [comp for comp in self.world.competitions if comp.type == CompetitionType.LEAGUE]
-        league_teams = []
+        league_clubs = []
         for league in leagues:
-            league_teams.extend(league.clubs)
+            league_clubs.extend(league.clubs)
 
-        league_teams = set(league_teams)
-        no_league_team = list(all_teams.difference(league_teams))
-
-        # text = ", ".join([t.name for t in no_league_team])
-        # text = "No in league: " + text
-        # print(text)
-
+        league_clubs = set(league_clubs)
+        other_clubs = list(all_teams.difference(league_clubs))
         move_clubs = []
 
         for ix, league in enumerate(leagues):
-            results = self.results_for_competition(league)
-            table_data = LeagueTableWorker(league, results).get_sorted_table()
+            table_data = LeagueTableWorker(league, self.results_for_competition(league)).get_sorted_table()
 
             league_above = None if ix == 0 else leagues[ix - 1]
             league_below = None if ix >= len(leagues) - 1 else leagues[ix + 1]
 
-            if league_above is None:
-                winners = table_data[0].club
-                print(f"{league.name} Winners: {winners.name}")
-            else:
+            # promotion
+            winners = table_data[0].club
+            if league_above:
                 for club in [p.club for p in table_data[:3]]:
-                    # print(f"{league.name}: {club.name} promoted to {league_above.name}")
                     move_clubs.append((club, league, league_above))
 
+            # relegation
             for club in [r.club for r in table_data[-3:]]:
-                # print(f"{league.name}: {club.name} relagated from {league.name}")
                 move_clubs.append((club, league, league_below))
 
+            print(f"{league.name} winners {winners.name}")
+
         # non league club promotion
-        shuffle(no_league_team)
+        shuffle(other_clubs)
         league_above = leagues[-1]
-        for club in no_league_team[:3]:
+        for club in other_clubs[:3]:
             move_clubs.append((club, None, league_above))
 
         # do club moves
+        print("Move clubs")
         for data in move_clubs:
-            text = f"{data[0].name}"
+            text = f" - {data[0].name}"
             if data[1]:
                 text += f" remove from {data[1].name}"
                 data[1].clubs.remove(data[0])
