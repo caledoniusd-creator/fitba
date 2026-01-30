@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from enum import Enum, unique, auto
 from random import choices, shuffle
 from typing import Optional, List
 
@@ -49,6 +50,10 @@ def create_test_world() -> World:
     world.competitions.append(cup)
 
     return world
+
+
+
+
 
 
 class WorldWorker:
@@ -119,4 +124,91 @@ class WorldWorker:
         return next_week, fixtures
 
 
+@unique
+class WorldState(Enum):
+    NewSeason = auto()
+    PostSeason = auto()
+    PreFixtures = auto()
+    PostFixtures = auto()
+    AwaitingContinue = auto()
 
+
+class WorldStateEngine:
+    def __init__(self, world: World):
+        self._world_worker = WorldWorker(world)
+        self._state = WorldState.NewSeason
+
+        self._fixtures = None
+        self._results = None
+    
+    def clear_fixtures_and_results(self):
+        self._fixtures = None
+        self._results = None
+
+    @property
+    def fixtures(self):
+        return self._fixtures
+    
+    @property
+    def results(self):
+        return self._results
+
+    @property
+    def world_worker(self):
+        return self._world_worker
+    
+    @property
+    def world(self):
+        return self._world_worker.world
+    
+    @property
+    def world_time(self):
+        return self.world.world_time
+    
+    @property
+    def state(self):
+        return self._state
+    
+    @state.setter
+    def state(self, new_state: WorldState):
+        self._state = new_state
+
+    def _process_state(self):
+        if self.state == WorldState.NewSeason:
+            self.world_worker.create_new_season()
+            print(f"New Season {self.world_time.year}")
+            self.state = WorldState.AwaitingContinue
+
+        elif self.state == WorldState.PostSeason:
+            print(f"Post Season {self.world_time.year} completed! prepare promotion/relegation and new season setup next week.")
+            print("Advance Week")
+            self.world_time.advance_week()
+            self.state = WorldState.NewSeason
+
+        elif self.state == WorldState.PreFixtures:
+            print("Pre Fixtures")
+            self._results = self.world_worker.process_fixtures(self._fixtures, self.world_time.week)
+            self.state = WorldState.PostFixtures
+
+        elif self.state == WorldState.PostFixtures:
+            print("Post Fixtures")
+            self.state = WorldState.AwaitingContinue
+
+        elif self.state == WorldState.AwaitingContinue:
+            print("Continue")
+            current_week_fixtures = self.world_worker.get_current_fixtures()
+            if current_week_fixtures:
+                self._fixtures = current_week_fixtures
+                self.state = WorldState.PreFixtures
+            else:
+                print("Advance Week")
+                self.clear_fixtures_and_results()
+                self.world_time.advance_week()
+                if self.world_time.week == WEEKS_IN_YEAR:
+                    self.state = WorldState.PostSeason
+
+        else:
+            raise RuntimeError(f"Unknown state: {self.state}")
+        
+    def advance_game(self):
+        self._process_state()

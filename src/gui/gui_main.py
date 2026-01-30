@@ -12,7 +12,7 @@ from PyQt6.QtWidgets import *
 
 from .views import ViewBase, MainMenuView, GameView
 
-from src.core.world import create_test_world
+from src.core.world import create_test_world, WorldStateEngine
 
 
 
@@ -45,8 +45,9 @@ class AppMainWindow(QStackedWidget):
         
         self.setCurrentIndex(main_menu_ix)
 
-        self.center_on_screen()
+        
         self.show()
+        self.center_on_screen()
 
     def center_on_screen(self):
         screen = QGuiApplication.primaryScreen().availableGeometry()
@@ -55,7 +56,7 @@ class AppMainWindow(QStackedWidget):
         self.move(frame.topLeft())
 
     def on_new_game(self):
-        self._game_menu.world = create_test_world()
+        self._game_menu.world_engine = WorldStateEngine(create_test_world())
         self.setCurrentWidget(self._game_menu)
 
     def on_load_game(self):
