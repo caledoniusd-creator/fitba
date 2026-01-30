@@ -9,6 +9,7 @@ from .club import ClubPool, ClubFactory
 from .competition import CompetitionType, Competition, League, Cup
 from .leagues import league_30_fixtures, create_league_fixtures
 from .fixture import Fixture, Result
+from .league_table import LeagueTableWorker
 
 
 @dataclass
@@ -52,11 +53,17 @@ def create_test_world() -> World:
     return world
 
 
-
-
-
-
 class WorldWorker:
+    """
+    A worker class responsible for managing seasonal operations and fixture processing in the game world.
+
+    This class handles the creation of new seasons, processing of post-season activities,
+    retrieval and processing of fixtures, and calculation of competition results.
+
+    Attributes:
+        world (World): The world instance that this worker manages.
+    """
+
     def __init__(self, world: World):
         self.world = world
 
@@ -66,16 +73,61 @@ class WorldWorker:
         self.world.current_season = Season(self.world.world_time.year)
 
         fixture_calendar = self.world.current_season.fixture_calendar
-        for competition in self.world.competitions:
-            if competition.type == CompetitionType.LEAGUE:
-                league_fixtures = create_league_fixtures(
-                    competition, reverse_fixtures=True
-                )
+        for competition in [c for c in self.world.competitions if c.type == CompetitionType.LEAGUE]:
+            for ix, round_fixtures in enumerate(create_league_fixtures(competition, reverse_fixtures=True)):
+                fixture_calendar.add_objects(league_30_fixtures[ix], round_fixtures)
 
-                for round_num, round_fixtures in enumerate(league_fixtures):
-                    fixture_calendar.add_objects(
-                        league_30_fixtures[round_num], round_fixtures
-                    )
+    def process_post_season(self):
+        all_teams = set(self.world.club_pool.get_all_clubs())
+        leagues = [comp for comp in self.world.competitions if comp.type == CompetitionType.LEAGUE]
+        league_teams = []
+        for league in leagues:
+            league_teams.extend(league.clubs)
+
+        league_teams = set(league_teams)
+        no_league_team = list(all_teams.difference(league_teams))
+
+        # text = ", ".join([t.name for t in no_league_team])
+        # text = "No in league: " + text
+        # print(text)
+
+        move_clubs = []
+
+        for ix, league in enumerate(leagues):
+            results = self.results_for_competition(league)
+            table_data = LeagueTableWorker(league, results).get_sorted_table()
+
+            league_above = None if ix == 0 else leagues[ix - 1]
+            league_below = None if ix >= len(leagues) - 1 else leagues[ix + 1]
+
+            if league_above is None:
+                winners = table_data[0].club
+                print(f"{league.name} Winners: {winners.name}")
+            else:
+                for club in [p.club for p in table_data[:3]]:
+                    # print(f"{league.name}: {club.name} promoted to {league_above.name}")
+                    move_clubs.append((club, league, league_above))
+
+            for club in [r.club for r in table_data[-3:]]:
+                # print(f"{league.name}: {club.name} relagated from {league.name}")
+                move_clubs.append((club, league, league_below))
+
+        # non league club promotion
+        shuffle(no_league_team)
+        league_above = leagues[-1]
+        for club in no_league_team[:3]:
+            move_clubs.append((club, None, league_above))
+
+        # do club moves
+        for data in move_clubs:
+            text = f"{data[0].name}"
+            if data[1]:
+                text += f" remove from {data[1].name}"
+                data[1].clubs.remove(data[0])
+            if data[2]:
+                text += f" add to {data[2].name}"
+                data[2].clubs.append(data[0])
+            print(text)
 
     def get_current_fixtures(self):
         week_num = self.world.world_time.week
@@ -183,6 +235,7 @@ class WorldStateEngine:
 
         elif self.state == WorldState.PostSeason:
             print(f"Post Season {self.world_time.year} completed! prepare promotion/relegation and new season setup next week.")
+            self.world_worker.process_post_season()
             print("Advance Week")
             self.world_time.advance_week()
             self.state = WorldState.NewSeason
