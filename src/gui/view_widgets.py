@@ -84,7 +84,6 @@ class ResultsList(WidgetList):
         self.set_widgets([ResultLabel(r) for r in results])  
 
                 
-
 class LeagueTableWidget(QFrame):
     def __init__(self, competition: League, table_data: List, parent=None):
         super().__init__(parent)
@@ -105,12 +104,6 @@ class LeagueTableWidget(QFrame):
         gd = 9
         points = 10
         right_edge = 11 
-
-        def number_label(num: int):
-            lbl = QLabel(str(num))
-            lbl.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-            change_font(lbl, 0, True)
-            return lbl
         
         def title_label(text: str):
             lbl = QLabel(text)
@@ -118,30 +111,23 @@ class LeagueTableWidget(QFrame):
             change_font(lbl, 0, True)
             return lbl
 
-        table_layout.addWidget(title_label("Ply"), 0, played, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-        table_layout.addWidget(title_label("W"), 0, won, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-        table_layout.addWidget(title_label("D"), 0, draw, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-        table_layout.addWidget(title_label("L"), 0, loss, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-        table_layout.addWidget(title_label("GF"), 0, gf, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-        table_layout.addWidget(title_label("GA"), 0, ga, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-        table_layout.addWidget(title_label("GD"), 0, gd, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-        table_layout.addWidget(title_label("Pts}"), 0, points, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-
         row_ix = 0
+
+        headers = [("Ply", played), ("W", won), ("D", draw), ("L", loss), ("GF", gf), ("GA", ga), ("GD", gd), ("Pts", points)]
+        for header in headers:
+            table_layout.addWidget(title_label(header[0]), row_ix, header[1], Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+
         for ix, row in enumerate(table_data):
             club_lbl = QLabel(row.club.name)
             club_lbl.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
             row_ix += 1
-            table_layout.addWidget(number_label(ix + 1), row_ix, num_col, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+            table_layout.addWidget(title_label(str(ix + 1)), row_ix, num_col, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
             table_layout.addWidget(club_lbl, row_ix, club_col, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-            table_layout.addWidget(QLabel(str(row.played)), row_ix, played, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-            table_layout.addWidget(QLabel(str(row.won)), row_ix, won, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-            table_layout.addWidget(QLabel(str(row.drawn)), row_ix, draw, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-            table_layout.addWidget(QLabel(str(row.lost)), row_ix, loss, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-            table_layout.addWidget(QLabel(str(row.goals_for)), row_ix, gf, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-            table_layout.addWidget(QLabel(str(row.goals_against)), row_ix, ga, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-            table_layout.addWidget(QLabel(str(row.goal_diff)), row_ix, gd, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-            table_layout.addWidget(QLabel(str(row.points)), row_ix, points, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+
+            row_items = [(row.played, played), (row.won, won), (row.drawn, draw), (row.lost, loss), (row.goals_for, gf), (row.goals_against, ga), (row.goal_diff, gd), (row.points, points)]
+            for item in row_items:
+                table_layout.addWidget(QLabel(str(item[0])), row_ix, item[1], Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+
         row_ix += 1
         table_layout.setRowStretch(row_ix, 100)
         table_layout.setColumnStretch(left_edge, 100)
@@ -154,5 +140,3 @@ class LeagueTableWidget(QFrame):
         layout = QVBoxLayout(self)
         layout.addWidget(league_title_label, 0, Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
         layout.addLayout(table_layout)
-
-
