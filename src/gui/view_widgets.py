@@ -100,7 +100,18 @@ class SeasonView(QWidget):
             if week.week_number != week_number:
                 week.selected = False
 
+    def set_current_week(self, week: int):
+        if 0 > week > WEEKS_IN_YEAR:
+            raise ValueError("invalid week")
+        ix = week - 1
+        self._weeks[ix].selected = True
 
+    def week_widget(self):
+        for w in self._weeks:
+            if w.selected is True:
+                return w
+        return None
+    
 
 class SeasonWeekScroll(QScrollArea):
     def __init__(self, parent=None):
@@ -110,3 +121,9 @@ class SeasonWeekScroll(QScrollArea):
         self.setWidget(self._season_view)
 
         self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Expanding)
+
+    def set_current_week(self, week: int):
+        self._season_view.set_current_week(week)
+        widget = self._season_view.week_widget()
+        if widget:
+            self.ensureWidgetVisible(widget)

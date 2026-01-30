@@ -164,6 +164,8 @@ class GameView(ViewBase):
             self.world_time_lbl.set_time(self._world_engine.world_time)
         else:
             self.world_time_lbl.set_time(None)
+
+        self.season_scroll.set_current_week(self._world_engine.world_time.week)
         self.central_view.invalidate(self._world_engine)
 
     def on_world_changed(self):
