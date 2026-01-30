@@ -79,7 +79,9 @@ class WorldWorker:
 
     def get_current_fixtures(self):
         week_num = self.world.world_time.week
-        return self.world.current_season.fixture_calendar.weeks.get(week_num, [])
+        if self.world.current_season:
+            return self.world.current_season.fixture_calendar.weeks.get(week_num, [])
+        return []
 
     def process_fixtures(self, fixtures: List[Fixture], week: int):
         fixture_calendar = self.world.current_season.fixture_calendar
@@ -195,7 +197,6 @@ class WorldStateEngine:
             self.state = WorldState.AwaitingContinue
 
         elif self.state == WorldState.AwaitingContinue:
-            print("Continue")
             current_week_fixtures = self.world_worker.get_current_fixtures()
             if current_week_fixtures:
                 self._fixtures = current_week_fixtures

@@ -17,7 +17,6 @@ from src.core.world import create_test_world, WorldStateEngine
 
 
 
-
 @unique
 class AppState(Enum):
     MainMenu = auto()
@@ -27,9 +26,9 @@ class AppState(Enum):
 
 class AppMainWindow(QStackedWidget):
 
-    def __init__(self, parent=None):
+    def __init__(self, window_size: QSize = QSize(1920, 1024), parent=None):
         super().__init__(parent=parent)
-        self.setFixedSize(QSize(1024, 768))
+        self.setFixedSize(window_size)
         self.setWindowTitle("Fitba")
 
         self._main_menu = MainMenuView()
@@ -75,6 +74,8 @@ class GUIApplication(QApplication):
         self.widget = None
 
     def run(self):
+        # print("Styles: " + ", ".join(QStyleFactory.keys()))
+        QApplication.setStyle(QStyleFactory.create("Windows"))
 
         self.widget = AppMainWindow()
         self.widget.show()

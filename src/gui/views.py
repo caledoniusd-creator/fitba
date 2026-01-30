@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import *
 from core.world import WorldState, WorldStateEngine
 
 from .utils import change_font
-from .view_widgets import WorldTimeLabel, SeasonWeekScroll
+from .view_widgets import WorldTimeLabel, SeasonWeekScroll, FixtureList, ResultsList
 
 
 class ViewBase(QWidget):
@@ -57,19 +57,34 @@ class MainMenuView(ViewBase):
 
 
 
-class GameViewButtonBar(QFrame):
+class GameViewTopBar(QFrame):
     game_continue = pyqtSignal(name="game continue")
 
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.setFrameStyle(QFrame.Shape.Panel | QFrame.Shadow.Sunken)
+        self.setFrameStyle(QFrame.Shape.Box | QFrame.Shadow.Plain)
+
+        self.world_time_lbl = WorldTimeLabel()
+        self.state_lbl = QLabel()
 
         continue_btn = QPushButton("Continue")
         continue_btn.clicked.connect(self.game_continue)
+        change_font(continue_btn, 2, True)
+
         layout = QHBoxLayout(self)
+        layout.addWidget(self.world_time_lbl, 0, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        layout.addStretch(100)
+        layout.addWidget(self.state_lbl, 0, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         layout.addWidget(continue_btn, 0, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
 
+    def invalidate(self, world_engine: WorldStateEngine):
+        if world_engine:
+            self.world_time_lbl.set_time(world_engine.world_time)
+            self.state_lbl.setText(f"{world_engine.state.name} ({world_engine.state.value})")
+        else:
+            self.world_time_lbl.set_time(None)
+            self.state_lbl.clear()
 
 
 class GameCenterWidget(QFrame):
@@ -77,36 +92,48 @@ class GameCenterWidget(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setFrameStyle(QFrame.Shape.Box | QFrame.Shadow.Sunken)
+        self._fixtures = FixtureList()
+        self._results = ResultsList()
+        
+        self._fixtures.setVisible(False)
+        self._results.setVisible(False)
 
-        self.info_label = QLabel()
-        self.info_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        change_font(self.info_label, 4)
-
-        layout = QVBoxLayout(self)
-        layout.addWidget(self.info_label, 1, Qt.AlignmentFlag.AlignCenter)
+        self._main_layout = QVBoxLayout(self)
+        self._main_layout.addWidget(self._fixtures)
+        self._main_layout.addWidget(self._results)
 
     def invalidate(self, world_engine: WorldStateEngine | None):
-        if world_engine is None:
-            self.info_label.clear()
-        else:
-            text = f"State: {world_engine.state.name} [{world_engine.state.value}]"
+        if world_engine.state.value == WorldState.AwaitingContinue.value:
+            current_fixtures = world_engine.world_worker.get_current_fixtures()
+            self._fixtures.set_fixtures(current_fixtures)
+            self._results.set_results()
 
-            if WorldState.PreFixtures.name == world_engine.state.name:
-                fixtures = world_engine.fixtures
-                if fixtures:
-                    fx = "\n".join([str(f) for f in fixtures])
-                    text += "\n"+fx
-            elif WorldState.PostFixtures.name == world_engine.state.name:
-                results = world_engine.results
-                if results:
-                    rx = "\n".join([str(r) for r in results])
-                    text += "\n"+rx
-            elif WorldState.AwaitingContinue.value == world_engine.state.value:
-                current_fixtures = world_engine.world_worker.get_current_fixtures()
-                if current_fixtures:
-                    fx = "\n".join([str(f) for f in current_fixtures])
-                    text += "\n"+fx
-            self.info_label.setText(text)
+        elif world_engine.state.value == WorldState.NewSeason.value:
+            self._fixtures.set_fixtures()
+            self._results.set_results()
+
+        elif world_engine.state.value == WorldState.PostSeason.value:
+            self._fixtures.set_fixtures()
+            self._results.set_results()
+
+        elif world_engine.state.value == WorldState.PreFixtures.value:
+            self._fixtures.set_fixtures(world_engine.fixtures)
+            self._results.set_results()
+
+        elif world_engine.state.value == WorldState.PostFixtures.value:
+            self._results.set_results(world_engine.results)
+            self._fixtures.set_fixtures()
+
+        # if world_engine.state.value in [WorldState.AwaitingContinue.value, WorldState.PreFixtures.value]:
+        #     current_fixtures =  world_engine.world_worker.get_current_fixtures()
+        #     self._fixtures.set_fixtures(current_fixtures)
+        # else:
+        #     self._fixtures.set_fixtures([])
+        #     self._results.set_results([])
+        
+        # if world_engine.state.value == WorldState.PostFixtures.value:
+        #     self._results.set_results(world_engine.results)
+
 
 class GameCentralView(QStackedWidget):
     def __init__(self, parent =None):
@@ -125,25 +152,22 @@ class GameView(ViewBase):
 
         self.setWindowTitle("Game")
 
-
+        self.top_bar = GameViewTopBar()
+        self.top_bar.game_continue.connect(self.game_continue)
+        
         self.world_time_lbl = WorldTimeLabel()
         self.season_scroll = SeasonWeekScroll()
         self.central_view = GameCenterWidget()
-        self.button_bar = GameViewButtonBar()
-        self.button_bar.game_continue.connect(self.game_continue)
-
-        header_layout = QHBoxLayout()
-        header_layout.addWidget(self.world_time_lbl, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
-        header_layout.addStretch(10)
-
+        
+       
         mid_layout = QHBoxLayout()
         mid_layout.addWidget(self.season_scroll, Qt.AlignmentFlag.AlignLeft)
         mid_layout.addWidget(self.central_view, 100)
 
         layout = QVBoxLayout(self)
-        layout.addLayout(header_layout)
+        layout.addWidget(self.top_bar)
         layout.addLayout(mid_layout, 100)
-        layout.addWidget(self.button_bar)
+        
 
         self.world_changed.connect(self.on_world_changed)
         self.game_continue.connect(self.on_game_continue)
@@ -160,11 +184,7 @@ class GameView(ViewBase):
             self.world_changed.emit()
 
     def invalidate_data(self):
-        if self._world_engine:
-            self.world_time_lbl.set_time(self._world_engine.world_time)
-        else:
-            self.world_time_lbl.set_time(None)
-
+        self.top_bar.invalidate(self.world_engine)
         self.season_scroll.set_current_week(self._world_engine.world_time.week)
         self.central_view.invalidate(self._world_engine)
 
