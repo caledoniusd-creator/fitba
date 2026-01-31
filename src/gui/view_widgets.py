@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import *
 
 
 from core.world_time import DAYS_IN_WEEK, WEEKS_IN_YEAR, WorldTime
+from core.club import Club
 from core.competition import League
 from core.fixture import Fixture, Result
 
@@ -140,3 +141,24 @@ class LeagueTableWidget(QFrame):
         layout = QVBoxLayout(self)
         layout.addWidget(league_title_label, 0, Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
         layout.addLayout(table_layout)
+
+
+class ClubListWidget(QFrame):
+    def __init__(self, clubs: List[Club], parent=None):
+        super().__init__(parent)
+        self.setFrameStyle(QFrame.Shape.Box | QFrame.Shadow.Plain)
+
+        self._widgets = []
+        self._widgets_layout = QGridLayout(self)
+
+        num_rows = 4
+        for ix, club in enumerate(clubs):
+            row = ix // num_rows
+            col = (ix % num_rows) + 1
+            
+            lbl = QLabel(club.name)
+            lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            change_font(lbl, 1, True)
+
+            self._widgets_layout.addWidget(lbl, row, col, Qt.AlignmentFlag.AlignCenter)
+            

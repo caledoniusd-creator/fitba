@@ -32,7 +32,7 @@ class World:
 
 def create_test_world() -> World:    
     world = World(WorldTime(1, 1))
-    for club in ClubFactory.create_clubs(40):
+    for club in ClubFactory.create_clubs(48):
         world.club_pool.add_club(club)
 
     all_clubs = world.club_pool.get_all_clubs()
@@ -84,8 +84,7 @@ class WorldWorker:
         for league in leagues:
             league_clubs.extend(league.clubs)
 
-        league_clubs = set(league_clubs)
-        other_clubs = list(all_teams.difference(league_clubs))
+        other_clubs = list(all_teams.difference(set(league_clubs)))
         move_clubs = []
 
         for ix, league in enumerate(leagues):
@@ -123,7 +122,7 @@ class WorldWorker:
                 text += f" add to {data[2].name}"
                 data[2].clubs.append(data[0])
             print(text)
-            
+
     def process_post_season(self):
         self._promotion_and_relegation()
 
