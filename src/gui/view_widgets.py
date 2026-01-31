@@ -1,4 +1,3 @@
-
 from typing import List
 
 from PyQt6.QtCore import *
@@ -6,7 +5,7 @@ from PyQt6.QtGui import *
 from PyQt6.QtWidgets import *
 
 
-from core.world_time import DAYS_IN_WEEK, WEEKS_IN_YEAR, WorldTime
+from core.world_time import WorldTime
 from core.club import Club
 from core.competition import League
 from core.fixture import Fixture, Result
@@ -17,7 +16,6 @@ from .generic_widgets import WidgetList
 
 
 class WorldTimeLabel(QLabel):
-
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         change_font(self, 4, True)
@@ -25,24 +23,27 @@ class WorldTimeLabel(QLabel):
     def set_time(self, time: WorldTime | None):
         if time is not None:
             text = f"{time} ".replace("Year", "Season")
-        else: 
+        else:
             text = "N/A"
         self.setText(text)
 
 
 class FixtureLabel(QFrame):
-
     def __init__(self, fixture: Fixture, parent=None):
         super().__init__(parent)
         self.setFrameStyle(QFrame.Shape.StyledPanel | QFrame.Shadow.Plain)
 
         comp_label = QLabel(fixture.competition.shortname)
-        comp_label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        comp_label.setAlignment(
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+        )
         comp_label.setFixedWidth(64)
         change_font(comp_label, 0, True)
 
-        home_team  = QLabel(fixture.club1.name)
-        home_team.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        home_team = QLabel(fixture.club1.name)
+        home_team.setAlignment(
+            Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+        )
         home_team.setFixedWidth(128)
 
         self.vs_label = QLabel("v")
@@ -51,15 +52,25 @@ class FixtureLabel(QFrame):
         change_font(self.vs_label, 0, True)
 
         away_team = QLabel(fixture.club2.name)
-        away_team.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        away_team.setAlignment(
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+        )
         away_team.setFixedWidth(128)
 
         layout = QHBoxLayout(self)
         layout.addStretch(10)
-        layout.addWidget(comp_label, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-        layout.addWidget(home_team, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-        layout.addWidget(self.vs_label, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-        layout.addWidget(away_team, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        layout.addWidget(
+            comp_label, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+        )
+        layout.addWidget(
+            home_team, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+        )
+        layout.addWidget(
+            self.vs_label, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+        )
+        layout.addWidget(
+            away_team, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+        )
         layout.addStretch(10)
 
 
@@ -70,21 +81,21 @@ class ResultLabel(FixtureLabel):
 
 
 class FixtureList(WidgetList):
-    def __init__(self, auto_hide: bool=False, parent=None):
+    def __init__(self, auto_hide: bool = False, parent=None):
         super().__init__("Fixtures", auto_hide=auto_hide, parent=parent)
 
-    def set_fixtures(self, fixtures: List[Fixture]=[]):
-        self.set_widgets([FixtureLabel(f) for f in fixtures])  
-        
+    def set_fixtures(self, fixtures: List[Fixture] = []):
+        self.set_widgets([FixtureLabel(f) for f in fixtures])
+
 
 class ResultsList(WidgetList):
-    def __init__(self, auto_hide: bool=False, parent=None):
+    def __init__(self, auto_hide: bool = False, parent=None):
         super().__init__("Results", auto_hide=auto_hide, parent=parent)
 
-    def set_results(self, results: List[Result]=[]):
-        self.set_widgets([ResultLabel(r) for r in results])  
+    def set_results(self, results: List[Result] = []):
+        self.set_widgets([ResultLabel(r) for r in results])
 
-                
+
 class LeagueTableWidget(QFrame):
     def __init__(self, competition: League, table_data: List, parent=None):
         super().__init__(parent)
@@ -104,8 +115,8 @@ class LeagueTableWidget(QFrame):
         ga = 8
         gd = 9
         points = 10
-        right_edge = 11 
-        
+        right_edge = 11
+
         def title_label(text: str):
             lbl = QLabel(text)
             lbl.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
@@ -114,20 +125,60 @@ class LeagueTableWidget(QFrame):
 
         row_ix = 0
 
-        headers = [("Ply", played), ("W", won), ("D", draw), ("L", loss), ("GF", gf), ("GA", ga), ("GD", gd), ("Pts", points)]
+        headers = [
+            ("Ply", played),
+            ("W", won),
+            ("D", draw),
+            ("L", loss),
+            ("GF", gf),
+            ("GA", ga),
+            ("GD", gd),
+            ("Pts", points),
+        ]
         for header in headers:
-            table_layout.addWidget(title_label(header[0]), row_ix, header[1], Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+            table_layout.addWidget(
+                title_label(header[0]),
+                row_ix,
+                header[1],
+                Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
+            )
 
         for ix, row in enumerate(table_data):
             club_lbl = QLabel(row.club.name)
-            club_lbl.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            club_lbl.setAlignment(
+                Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+            )
             row_ix += 1
-            table_layout.addWidget(title_label(str(ix + 1)), row_ix, num_col, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-            table_layout.addWidget(club_lbl, row_ix, club_col, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            table_layout.addWidget(
+                title_label(str(ix + 1)),
+                row_ix,
+                num_col,
+                Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
+            )
+            table_layout.addWidget(
+                club_lbl,
+                row_ix,
+                club_col,
+                Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter,
+            )
 
-            row_items = [(row.played, played), (row.won, won), (row.drawn, draw), (row.lost, loss), (row.goals_for, gf), (row.goals_against, ga), (row.goal_diff, gd), (row.points, points)]
+            row_items = [
+                (row.played, played),
+                (row.won, won),
+                (row.drawn, draw),
+                (row.lost, loss),
+                (row.goals_for, gf),
+                (row.goals_against, ga),
+                (row.goal_diff, gd),
+                (row.points, points),
+            ]
             for item in row_items:
-                table_layout.addWidget(QLabel(str(item[0])), row_ix, item[1], Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+                table_layout.addWidget(
+                    QLabel(str(item[0])),
+                    row_ix,
+                    item[1],
+                    Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
+                )
 
         row_ix += 1
         table_layout.setRowStretch(row_ix, 100)
@@ -135,11 +186,17 @@ class LeagueTableWidget(QFrame):
         table_layout.setColumnStretch(right_edge, 100)
 
         league_title_label = QLabel(competition.name)
-        league_title_label.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+        league_title_label.setAlignment(
+            Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop
+        )
         change_font(league_title_label, 2, True)
 
         layout = QVBoxLayout(self)
-        layout.addWidget(league_title_label, 0, Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+        layout.addWidget(
+            league_title_label,
+            0,
+            Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop,
+        )
         layout.addLayout(table_layout)
 
 
@@ -156,7 +213,6 @@ class ClubListWidget(QFrame):
         self._widgets_layout.setColumnStretch(self._num_cols + 1, 100)
         self.update_visibility()
 
-
     def clear_widgets(self):
         for w in self._widgets:
             self._widgets_layout.removeWidget(w)
@@ -169,25 +225,31 @@ class ClubListWidget(QFrame):
         if clubs:
             for ix, club in enumerate(clubs):
                 row, col = ix // self._num_cols, (ix % self._num_cols) + 1
-                
+
                 lbl = QLabel(club.name)
-                lbl.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+                lbl.setAlignment(
+                    Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+                )
                 change_font(lbl, 4, True)
 
-                self._widgets_layout.addWidget(lbl, row, col, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+                self._widgets_layout.addWidget(
+                    lbl,
+                    row,
+                    col,
+                    Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
+                )
                 self._widgets.append(lbl)
         self.update_visibility()
 
     @property
     def has_widgets(self):
         return True if self._widgets else False
-    
+
     def update_visibility(self):
         self.setVisible(True if self.has_widgets else False)
 
 
 class ClubListView(QTreeWidget):
-
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
@@ -200,7 +262,6 @@ class ClubListView(QTreeWidget):
             self.setHeaderLabels(["Club", "Squard Rating"])
 
             for club in clubs:
-
                 item = QTreeWidgetItem()
                 item.setText(0, club.name)
                 item.setText(1, str(club.squad.rating))
@@ -215,7 +276,6 @@ class ClubListView(QTreeWidget):
     def has_indexes(self):
         count = self.topLevelItemCount()
         return True if count > 0 else False
-    
+
     def update_visibility(self):
         self.setVisible(True if self.has_indexes else False)
-        

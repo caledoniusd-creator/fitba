@@ -1,20 +1,15 @@
-
-
 from enum import Enum, unique, auto
 from sys import argv
 from traceback import format_exc
 
-from PyQt6.QtCore import Qt
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 from PyQt6.QtWidgets import *
 
 
-from .views import ViewBase, MainMenuView, GameView
+from .views import MainMenuView, GameView
 
 from src.core.world import create_test_world, WorldStateEngine
-
-
 
 
 @unique
@@ -23,9 +18,7 @@ class AppState(Enum):
     GameView = auto()
 
 
-
 class AppMainWindow(QStackedWidget):
-
     def __init__(self, window_size: QSize = QSize(1920, 1024), parent=None):
         super().__init__(parent=parent)
         self.setFixedSize(window_size)
@@ -41,10 +34,9 @@ class AppMainWindow(QStackedWidget):
 
         main_menu_ix = self.addWidget(self._main_menu)
         self.addWidget(self._game_menu)
-        
+
         self.setCurrentIndex(main_menu_ix)
 
-        
         self.show()
         self.center_on_screen()
 
@@ -65,10 +57,7 @@ class AppMainWindow(QStackedWidget):
         self.setCurrentWidget(self._main_menu)
 
 
-
-
 class GUIApplication(QApplication):
-
     def __init__(self, args=argv):
         super().__init__(args)
         self.widget = None
@@ -77,10 +66,10 @@ class GUIApplication(QApplication):
         # print("Styles: " + ", ".join(QStyleFactory.keys()))
         # QApplication.setStyle(QStyleFactory.create("Windows"))
         QApplication.setStyle(QStyleFactory.create("Fusion"))
-        
+
         self.widget = AppMainWindow()
         self.widget.show()
-        
+
         try:
             rc = self.exec()
         except Exception as e:

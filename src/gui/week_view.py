@@ -1,5 +1,3 @@
-
-
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 from PyQt6.QtWidgets import *
@@ -12,7 +10,6 @@ from .utils import change_font
 
 
 class DayView(QFrame):
-
     size = QSize(32, 32)
 
     def __init__(self, parent=None):
@@ -25,7 +22,6 @@ class DayView(QFrame):
 
 
 class WeekView(QFrame):
-
     selected_week = pyqtSignal(int, name="selected")
 
     def __init__(self, week_number: int, parent=None):
@@ -37,21 +33,29 @@ class WeekView(QFrame):
 
         self.week_number_label = QLabel(str(self.week_number))
         change_font(self.week_number_label, 2, True)
-        self.week_number_label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        self.week_number_label.setAlignment(
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+        )
 
         self.days = [DayView() for _ in range(DAYS_IN_WEEK)]
 
         layout = QHBoxLayout(self)
-        layout.addWidget(self.week_number_label, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        layout.addWidget(
+            self.week_number_label,
+            0,
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
+        )
         for day in self.days:
-            layout.addWidget(day, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+            layout.addWidget(
+                day, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+            )
         layout.addSpacerItem(QSpacerItem(16, 16))
         self.update_frame()
 
     @property
     def selected(self):
         return self._selected
-    
+
     @selected.setter
     def selected(self, is_selected: bool):
         if is_selected != self._selected:
@@ -65,22 +69,24 @@ class WeekView(QFrame):
             self.selected = not self.selected
 
     def update_frame(self):
-        self.setFrameStyle(QFrame.Shape.Panel | (QFrame.Shadow.Raised if not self.selected else QFrame.Shadow.Sunken))
+        self.setFrameStyle(
+            QFrame.Shape.Panel
+            | (QFrame.Shadow.Raised if not self.selected else QFrame.Shadow.Sunken)
+        )
 
-        
-            
+
 class SeasonView(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self._weeks = [
-            WeekView(i+1) for i in range(WEEKS_IN_YEAR)
-        ]
+        self._weeks = [WeekView(i + 1) for i in range(WEEKS_IN_YEAR)]
         self._weeks[0].selected = True
 
         layout = QVBoxLayout(self)
         for week in self._weeks:
-            layout.addWidget(week, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+            layout.addWidget(
+                week, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+            )
             week.selected_week.connect(self.on_selected_week)
 
     def on_selected_week(self, week_number):
@@ -99,7 +105,7 @@ class SeasonView(QWidget):
             if w.selected is True:
                 return w
         return None
-    
+
 
 class SeasonWeekScroll(QScrollArea):
     def __init__(self, parent=None):

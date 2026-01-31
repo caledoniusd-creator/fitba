@@ -1,4 +1,3 @@
-
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 from PyQt6.QtWidgets import *
@@ -11,7 +10,14 @@ from core.world import WorldState, WorldStateEngine
 
 from .utils import change_font
 from .generic_widgets import PagesDialog
-from .view_widgets import WorldTimeLabel, FixtureList, ResultsList, LeagueTableWidget, ClubListWidget, ClubListView
+from .view_widgets import (
+    WorldTimeLabel,
+    FixtureList,
+    ResultsList,
+    LeagueTableWidget,
+    ClubListWidget,
+    ClubListView,
+)
 from .week_view import SeasonWeekScroll
 
 
@@ -21,7 +27,6 @@ class ViewBase(QWidget):
 
 
 class MainMenuView(ViewBase):
-
     new_game = pyqtSignal(name="new game")
     load_game = pyqtSignal(name="load game")
     quit_game = pyqtSignal(name="quit")
@@ -53,13 +58,10 @@ class MainMenuView(ViewBase):
         button_layout.addStretch(10)
 
         layout = QHBoxLayout(self)
-        
+
         layout.addStretch(10)
         layout.addLayout(button_layout)
         layout.addStretch(10)
-
-
-
 
 
 class GameViewTopBar(QFrame):
@@ -78,28 +80,39 @@ class GameViewTopBar(QFrame):
         change_font(continue_btn, 2, True)
 
         layout = QHBoxLayout(self)
-        layout.addWidget(self.world_time_lbl, 0, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        layout.addWidget(
+            self.world_time_lbl,
+            0,
+            Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter,
+        )
         layout.addStretch(100)
-        layout.addWidget(self.state_lbl, 0, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-        layout.addWidget(continue_btn, 0, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        layout.addWidget(
+            self.state_lbl,
+            0,
+            Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter,
+        )
+        layout.addWidget(
+            continue_btn, 0, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+        )
 
     def invalidate(self, world_engine: WorldStateEngine):
         if world_engine:
             self.world_time_lbl.set_time(world_engine.world_time)
-            self.state_lbl.setText(f"{world_engine.state.name} ({world_engine.state.value})")
+            self.state_lbl.setText(
+                f"{world_engine.state.name} ({world_engine.state.value})"
+            )
         else:
             self.world_time_lbl.set_time(None)
             self.state_lbl.clear()
 
 
 class GameCenterWidget(QFrame):
-
     show_tables = pyqtSignal(name="show tables")
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setFrameStyle(QFrame.Shape.Box | QFrame.Shadow.Sunken)
-        
+
         self._world_engine: WorldStateEngine | None = None
 
         self.clubs_btn = QPushButton("Clubs")
@@ -109,34 +122,45 @@ class GameCenterWidget(QFrame):
 
         self.table_btn = QPushButton("Tables")
         self.table_btn.clicked.connect(self.show_tables)
-  
 
         btn_frame = QFrame()
         btn_frame.setFrameStyle(QFrame.Shape.Box | QFrame.Shadow.Plain)
         button_layout = QHBoxLayout(btn_frame)
 
         for w in [self.clubs_btn, self.competition_btn, self.table_btn]:
-            button_layout.addWidget(w, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+            button_layout.addWidget(
+                w, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+            )
         button_layout.addStretch(100)
-        btn_frame.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
-        
+        btn_frame.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred
+        )
+
         self._all_clubs = ClubListWidget()
         self._all_clubs_tree = ClubListView()
         self._fixtures = FixtureList(auto_hide=True)
         self._results = ResultsList(auto_hide=True)
 
         self._main_layout = QVBoxLayout(self)
-        self._main_layout.addWidget(btn_frame, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
-        self._main_layout.addWidget(self._all_clubs, 100, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        self._main_layout.addWidget(
+            btn_frame, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop
+        )
+        self._main_layout.addWidget(
+            self._all_clubs, 100, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop
+        )
         self._main_layout.addWidget(self._all_clubs_tree, 100)
-        self._main_layout.addWidget(self._fixtures, 100, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
-        self._main_layout.addWidget(self._results, 100, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        self._main_layout.addWidget(
+            self._fixtures, 100, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop
+        )
+        self._main_layout.addWidget(
+            self._results, 100, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop
+        )
         # self._main_layout.addStretch(10)
 
     @property
     def world_engine(self):
         return self._world_engine
-    
+
     @world_engine.setter
     def world_engine(self, new_engine: WorldStateEngine | None):
         if self._world_engine != new_engine:
@@ -146,7 +170,7 @@ class GameCenterWidget(QFrame):
     def invalidate(self):
         self._all_clubs.set_clubs()
         self._all_clubs_tree.set_clubs()
-        
+
         if self.world_engine:
             if self.world_engine.state.value == WorldState.AwaitingContinue.value:
                 current_fixtures = self.world_engine.world_worker.get_current_fixtures()
@@ -169,11 +193,11 @@ class GameCenterWidget(QFrame):
                 self._results.set_results(self.world_engine.results)
                 self._fixtures.clear_widgets()
 
-            else: 
+            else:
                 self._fixtures.clear_widgets()
                 self._results.clear_widgets()
 
-        else: 
+        else:
             self._fixtures.clear_widgets()
             self._results.clear_widgets()
 
@@ -183,10 +207,11 @@ class GameCenterWidget(QFrame):
             self._all_clubs_tree.set_clubs(None)
         else:
             self._all_clubs.set_clubs(self.world_engine.world.club_pool.get_all_clubs())
-            self._all_clubs_tree.set_clubs(self.world_engine.world.club_pool.get_all_clubs())
-        
-        print("Show Clubs")
+            self._all_clubs_tree.set_clubs(
+                self.world_engine.world.club_pool.get_all_clubs()
+            )
 
+        print("Show Clubs")
 
 
 class GameView(ViewBase):
@@ -202,12 +227,12 @@ class GameView(ViewBase):
 
         self.top_bar = GameViewTopBar()
         self.top_bar.game_continue.connect(self.game_continue)
-        
+
         self.world_time_lbl = WorldTimeLabel()
         self.season_scroll = SeasonWeekScroll()
         self.central_view = GameCenterWidget()
         self.central_view.show_tables.connect(self.on_show_tables)
-       
+
         mid_layout = QHBoxLayout()
         mid_layout.addWidget(self.season_scroll, Qt.AlignmentFlag.AlignLeft)
         mid_layout.addWidget(self.central_view, 100)
@@ -222,7 +247,7 @@ class GameView(ViewBase):
     @property
     def world_engine(self):
         return self._world_engine
-    
+
     @world_engine.setter
     def world_engine(self, new_world_engine: WorldStateEngine | None):
         if new_world_engine != self._world_engine:
@@ -245,7 +270,7 @@ class GameView(ViewBase):
         self.invalidate_data()
 
     def keyReleaseEvent(self, event):
-        if event.key() == Qt.Key.Key_F12:    
+        if event.key() == Qt.Key.Key_F12:
             event.setAccepted(True)
             self.main_menu.emit()
         else:
@@ -253,16 +278,20 @@ class GameView(ViewBase):
 
     def on_show_tables(self):
         widgets = []
-        leagues = [comp for comp in self._world_engine.world.competitions if comp.type.value == CompetitionType.LEAGUE.value]
+        leagues = [
+            comp
+            for comp in self._world_engine.world.competitions
+            if comp.type.value == CompetitionType.LEAGUE.value
+        ]
         for league in leagues:
             try:
-                ltw = LeagueTableWorker(league, self._world_engine.world_worker.results_for_competition(league))
+                ltw = LeagueTableWorker(
+                    league,
+                    self._world_engine.world_worker.results_for_competition(league),
+                )
                 widgets.append(LeagueTableWidget(league, ltw.get_sorted_table()))
             except KeyError:
                 pass
 
         if widgets:
             _ = PagesDialog(title="Leagues", pages=widgets, parent=self).exec()
-            
-
-        

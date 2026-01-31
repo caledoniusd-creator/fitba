@@ -1,4 +1,3 @@
-
 from typing import List
 
 
@@ -21,18 +20,31 @@ class WidgetList(QWidget):
     Properties:
         has_widgets (bool): Returns True if the widget list contains any widgets, False otherwise.
     """
-    def __init__(self, title: str, orientation: Qt.Orientation = Qt.Orientation.Vertical, auto_hide: bool=False, parent=None):
+
+    def __init__(
+        self,
+        title: str,
+        orientation: Qt.Orientation = Qt.Orientation.Vertical,
+        auto_hide: bool = False,
+        parent=None,
+    ):
         super().__init__(parent)
         self._auto_hide = auto_hide
         self._widgets = []
-        self.widget_layout = QVBoxLayout() if orientation == Qt.Orientation.Vertical else QHBoxLayout()
+        self.widget_layout = (
+            QVBoxLayout() if orientation == Qt.Orientation.Vertical else QHBoxLayout()
+        )
 
         title_lbl = QLabel(title)
-        title_lbl.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        title_lbl.setAlignment(
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+        )
         change_font(title_lbl, 2, True)
-        
+
         main_layout = QVBoxLayout(self)
-        main_layout.addWidget(title_lbl, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        main_layout.addWidget(
+            title_lbl, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+        )
         main_layout.addLayout(self.widget_layout)
         main_layout.addStretch(10)
 
@@ -46,7 +58,7 @@ class WidgetList(QWidget):
         if self._auto_hide is True:
             self.setVisible(True if self.has_widgets else False)
 
-    def clear_widgets(self, update_is_visible: bool=True):
+    def clear_widgets(self, update_is_visible: bool = True):
         for w in self._widgets:
             self.widget_layout.removeWidget(w)
             w.deleteLater()
@@ -55,12 +67,14 @@ class WidgetList(QWidget):
         if update_is_visible:
             self.update_visibility()
 
-    def set_widgets(self, widgets: List[QWidget]=[]):
+    def set_widgets(self, widgets: List[QWidget] = []):
         self.clear_widgets(False)
         for w in widgets:
             self._widgets.append(w)
-            self.widget_layout.addWidget(w, 0, Qt.AlignmentFlag.AlignHCenter| Qt.AlignmentFlag.AlignTop)
-        
+            self.widget_layout.addWidget(
+                w, 0, Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop
+            )
+
         self.update_visibility()
 
 
@@ -69,15 +83,15 @@ class PagesWidget(QWidget):
         super().__init__(parent=parent)
         self._title = title
         self._pages = pages
-        
+
         self._stack = QStackedWidget()
 
         btn_back = QToolButton()
-        btn_back.setText("\u2B05")
+        btn_back.setText("\u2b05")
         btn_back.clicked.connect(self.on_back)
 
         btn_next = QToolButton()
-        btn_next.setText("\u27A1")
+        btn_next.setText("\u27a1")
         btn_next.clicked.connect(self.on_next)
 
         btn_layout = QHBoxLayout()
@@ -95,7 +109,9 @@ class PagesWidget(QWidget):
         change_font(title_lbl, 4, True)
 
         layout = QVBoxLayout(self)
-        layout.addWidget(title_lbl, 0, Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+        layout.addWidget(
+            title_lbl, 0, Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop
+        )
         layout.addWidget(self._stack, 100)
         layout.addLayout(btn_layout)
 
@@ -112,9 +128,6 @@ class PagesDialog(QDialog):
     def __init__(self, title: str, pages: List[QWidget], parent=None):
         super().__init__(parent=parent)
         self.pages = PagesWidget(title=title, pages=pages)
-      
+
         layout = QVBoxLayout(self)
         layout.addWidget(self.pages, 1)
-
-
- 

@@ -30,7 +30,7 @@ class World:
         return f"World Time -> {self.world_time}"
 
 
-def create_test_world() -> World:    
+def create_test_world() -> World:
     world = World(WorldTime(1, 1))
     for club in ClubFactory.create_clubs(48):
         world.club_pool.add_club(club)
@@ -73,13 +73,21 @@ class WorldWorker:
         self.world.current_season = Season(self.world.world_time.year)
 
         fixture_calendar = self.world.current_season.fixture_calendar
-        for competition in [c for c in self.world.competitions if c.type == CompetitionType.LEAGUE]:
-            for ix, round_fixtures in enumerate(create_league_fixtures(competition, reverse_fixtures=True)):
+        for competition in [
+            c for c in self.world.competitions if c.type == CompetitionType.LEAGUE
+        ]:
+            for ix, round_fixtures in enumerate(
+                create_league_fixtures(competition, reverse_fixtures=True)
+            ):
                 fixture_calendar.add_objects(league_30_fixtures[ix], round_fixtures)
 
     def _promotion_and_relegation(self):
         all_teams = set(self.world.club_pool.get_all_clubs())
-        leagues = [comp for comp in self.world.competitions if comp.type == CompetitionType.LEAGUE]
+        leagues = [
+            comp
+            for comp in self.world.competitions
+            if comp.type == CompetitionType.LEAGUE
+        ]
         league_clubs = []
         for league in leagues:
             league_clubs.extend(league.clubs)
@@ -88,7 +96,9 @@ class WorldWorker:
         move_clubs = []
 
         for ix, league in enumerate(leagues):
-            table_data = LeagueTableWorker(league, self.results_for_competition(league)).get_sorted_table()
+            table_data = LeagueTableWorker(
+                league, self.results_for_competition(league)
+            ).get_sorted_table()
 
             league_above = None if ix == 0 else leagues[ix - 1]
             league_below = None if ix >= len(leagues) - 1 else leagues[ix + 1]
@@ -191,7 +201,7 @@ class WorldStateEngine:
 
         self._fixtures = None
         self._results = None
-    
+
     def clear_fixtures_and_results(self):
         self._fixtures = None
         self._results = None
@@ -199,7 +209,7 @@ class WorldStateEngine:
     @property
     def fixtures(self):
         return self._fixtures
-    
+
     @property
     def results(self):
         return self._results
@@ -207,19 +217,19 @@ class WorldStateEngine:
     @property
     def world_worker(self):
         return self._world_worker
-    
+
     @property
     def world(self):
         return self._world_worker.world
-    
+
     @property
     def world_time(self):
         return self.world.world_time
-    
+
     @property
     def state(self):
         return self._state
-    
+
     @state.setter
     def state(self, new_state: WorldState):
         self._state = new_state
@@ -231,7 +241,9 @@ class WorldStateEngine:
             self.state = WorldState.AwaitingContinue
 
         elif self.state == WorldState.PostSeason:
-            print(f"Post Season {self.world_time.year} completed! prepare promotion/relegation and new season setup next week.")
+            print(
+                f"Post Season {self.world_time.year} completed! prepare promotion/relegation and new season setup next week."
+            )
             self.world_worker.process_post_season()
             print("Advance Week")
             self.world_time.advance_week()
@@ -239,7 +251,9 @@ class WorldStateEngine:
 
         elif self.state == WorldState.PreFixtures:
             print("Pre Fixtures")
-            self._results = self.world_worker.process_fixtures(self._fixtures, self.world_time.week)
+            self._results = self.world_worker.process_fixtures(
+                self._fixtures, self.world_time.week
+            )
             self.state = WorldState.PostFixtures
 
         elif self.state == WorldState.PostFixtures:
@@ -260,6 +274,6 @@ class WorldStateEngine:
 
         else:
             raise RuntimeError(f"Unknown state: {self.state}")
-        
+
     def advance_game(self):
         self._process_state()

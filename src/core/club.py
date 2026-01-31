@@ -65,7 +65,7 @@ CLUB_NAMES = [
     "Downtown Dynamos",
     "Uptown United",
     "Central City FC",
-    "Boston Devils"
+    "Boston Devils",
 ]
 
 
