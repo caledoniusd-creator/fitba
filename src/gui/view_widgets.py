@@ -184,3 +184,38 @@ class ClubListWidget(QFrame):
     
     def update_visibility(self):
         self.setVisible(True if self.has_widgets else False)
+
+
+class ClubListView(QTreeWidget):
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.update_visibility()
+
+    def set_clubs(self, clubs: List[Club] | None = None):
+        self.clear()
+
+        if clubs:
+            self.setHeaderLabels(["Club", "Squard Rating"])
+
+            for club in clubs:
+
+                item = QTreeWidgetItem()
+                item.setText(0, club.name)
+                item.setText(1, str(club.squad.rating))
+                self.addTopLevelItem(item)
+
+            for i in range(self.columnCount()):
+                self.resizeColumnToContents(i)
+
+        self.update_visibility()
+
+    @property
+    def has_indexes(self):
+        count = self.topLevelItemCount()
+        return True if count > 0 else False
+    
+    def update_visibility(self):
+        self.setVisible(True if self.has_indexes else False)
+        

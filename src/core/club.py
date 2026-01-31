@@ -1,4 +1,4 @@
-from random import shuffle
+from random import shuffle, randint
 
 CLUB_NAMES = [
     "Red Lions",
@@ -69,9 +69,22 @@ CLUB_NAMES = [
 ]
 
 
+class Squad:
+    @staticmethod
+    def random():
+        return Squad(randint(50, 200))
+
+    def __init__(self, rating: int):
+        self.rating = rating
+
+    def __str__(self):
+        return f"Squad: {self.rating:3d}"
+
+
 class Club:
-    def __init__(self, name):
+    def __init__(self, name, squad):
         self.name = name
+        self.squad = squad
 
     def __str__(self):
         return f"Club: {self.name}"
@@ -80,14 +93,14 @@ class Club:
 class ClubFactory:
     @staticmethod
     def create_club(name):
-        return Club(name)
+        return Club(name, Squad.random())
 
     @staticmethod
     def create_clubs(count: int):
         names = list(CLUB_NAMES)
         shuffle(names)
         names = names[:count]
-        return [Club(name) for name in names]
+        return [Club(name, Squad.random()) for name in names]
 
 
 class ClubPool:

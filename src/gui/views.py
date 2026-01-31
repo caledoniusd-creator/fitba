@@ -11,7 +11,7 @@ from core.world import WorldState, WorldStateEngine
 
 from .utils import change_font
 from .generic_widgets import PagesDialog
-from .view_widgets import WorldTimeLabel, FixtureList, ResultsList, LeagueTableWidget, ClubListWidget
+from .view_widgets import WorldTimeLabel, FixtureList, ResultsList, LeagueTableWidget, ClubListWidget, ClubListView
 from .week_view import SeasonWeekScroll
 
 
@@ -104,7 +104,7 @@ class GameCenterWidget(QFrame):
 
         self.clubs_btn = QPushButton("Clubs")
         self.clubs_btn.clicked.connect(self.show_clubs)
-        
+
         self.competition_btn = QPushButton("Competitions")
 
         self.table_btn = QPushButton("Tables")
@@ -121,15 +121,17 @@ class GameCenterWidget(QFrame):
         btn_frame.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         
         self._all_clubs = ClubListWidget()
+        self._all_clubs_tree = ClubListView()
         self._fixtures = FixtureList(auto_hide=True)
         self._results = ResultsList(auto_hide=True)
 
         self._main_layout = QVBoxLayout(self)
         self._main_layout.addWidget(btn_frame, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
-        self._main_layout.addWidget(self._all_clubs, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
-        self._main_layout.addWidget(self._fixtures, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
-        self._main_layout.addWidget(self._results, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
-        self._main_layout.addStretch(10)
+        self._main_layout.addWidget(self._all_clubs, 100, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        self._main_layout.addWidget(self._all_clubs_tree, 100)
+        self._main_layout.addWidget(self._fixtures, 100, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        self._main_layout.addWidget(self._results, 100, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        # self._main_layout.addStretch(10)
 
     @property
     def world_engine(self):
@@ -143,7 +145,8 @@ class GameCenterWidget(QFrame):
 
     def invalidate(self):
         self._all_clubs.set_clubs()
-
+        self._all_clubs_tree.set_clubs()
+        
         if self.world_engine:
             if self.world_engine.state.value == WorldState.AwaitingContinue.value:
                 current_fixtures = self.world_engine.world_worker.get_current_fixtures()
@@ -177,8 +180,10 @@ class GameCenterWidget(QFrame):
     def show_clubs(self):
         if self.world_engine is None:
             self._all_clubs.set_clubs(None)
+            self._all_clubs_tree.set_clubs(None)
         else:
             self._all_clubs.set_clubs(self.world_engine.world.club_pool.get_all_clubs())
+            self._all_clubs_tree.set_clubs(self.world_engine.world.club_pool.get_all_clubs())
         
         print("Show Clubs")
 
