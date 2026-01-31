@@ -38,7 +38,7 @@ class MainMenuView(ViewBase):
 
         title = QLabel(self.windowTitle())
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        change_font(title, 4, True)
+        change_font(title, 16, True)
 
         new_game_btn = QPushButton("New Game")
         new_game_btn.clicked.connect(self.new_game)
@@ -49,6 +49,8 @@ class MainMenuView(ViewBase):
         quit_game_btn = QPushButton("Quit")
         quit_game_btn.clicked.connect(self.quit_game)
 
+        for btn in [new_game_btn, load_game_btn, quit_game_btn]:
+            change_font(btn, 8, True)
         button_layout = QVBoxLayout()
         button_layout.addWidget(title)
         button_layout.addStretch(10)
