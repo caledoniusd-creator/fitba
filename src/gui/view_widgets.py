@@ -144,21 +144,43 @@ class LeagueTableWidget(QFrame):
 
 
 class ClubListWidget(QFrame):
-    def __init__(self, clubs: List[Club], parent=None):
+    def __init__(self, parent=None):
         super().__init__(parent)
         self.setFrameStyle(QFrame.Shape.Box | QFrame.Shadow.Plain)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
+        self._num_cols = 4
         self._widgets = []
         self._widgets_layout = QGridLayout(self)
+        self._widgets_layout.setColumnStretch(0, 100)
+        self._widgets_layout.setColumnStretch(self._num_cols + 1, 100)
+        self.update_visibility()
 
-        num_rows = 4
-        for ix, club in enumerate(clubs):
-            row = ix // num_rows
-            col = (ix % num_rows) + 1
-            
-            lbl = QLabel(club.name)
-            lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            change_font(lbl, 1, True)
 
-            self._widgets_layout.addWidget(lbl, row, col, Qt.AlignmentFlag.AlignCenter)
-            
+    def clear_widgets(self):
+        for w in self._widgets:
+            self._widgets_layout.removeWidget(w)
+            w.deleteLater()
+        self._widgets.clear()
+
+    def set_clubs(self, clubs: List[Club] | None = None):
+        self.clear_widgets()
+
+        if clubs:
+            for ix, club in enumerate(clubs):
+                row, col = ix // self._num_cols, (ix % self._num_cols) + 1
+                
+                lbl = QLabel(club.name)
+                lbl.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+                change_font(lbl, 4, True)
+
+                self._widgets_layout.addWidget(lbl, row, col, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+                self._widgets.append(lbl)
+        self.update_visibility()
+
+    @property
+    def has_widgets(self):
+        return True if self._widgets else False
+    
+    def update_visibility(self):
+        self.setVisible(True if self.has_widgets else False)
