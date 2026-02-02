@@ -11,6 +11,7 @@ if __name__ == "__main__":
     parser.add_argument("-g", "--gui", action="store_true", default=True, help="Running GUI mode")
     args = parser.parse_args()
     
+
     if args.gui:
         run_gui_application()
     else:
