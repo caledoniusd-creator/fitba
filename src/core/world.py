@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum, unique, auto
-from random import choices, shuffle
+from random import choices, shuffle, randrange, seed as rand_seed
+
 from typing import Optional, List
 
 from .world_time import WEEKS_IN_YEAR, WorldTime
@@ -12,8 +13,14 @@ from .fixture import Fixture, Result
 from .league_table import LeagueTableWorker
 
 
+def random_seed():
+    return randrange(2**32)
+
+
+
 @dataclass
 class World:
+    world_seed: int
     world_time: WorldTime
     current_season: Optional[Season] = None
     previous_seasons: Optional[List[Season]] = None
@@ -25,28 +32,34 @@ class World:
         self.previous_seasons = self.previous_seasons or []
         self.club_pool = self.club_pool or ClubPool()
         self.competitions = self.competitions or []
+        
+        rand_seed(self.world_seed)
 
     def __str__(self):
         return f"World Time -> {self.world_time}"
 
 
 def create_test_world() -> World:
-    world = World(WorldTime(1, 1))
+    
+    world_seed = random_seed()
+    print(f"World Seed: {hex(world_seed)}")
+
+    world = World(world_seed, WorldTime(1, 1))
     for club in ClubFactory.create_clubs(48):
         world.club_pool.add_club(club)
 
     all_clubs = world.club_pool.get_all_clubs()
     shuffle(all_clubs)
 
-    league_prem = League("Premier League", "PL")
+    league_prem = League("Premier League", "PL", ranking=1)
     league_prem.clubs = all_clubs[:16]
     world.competitions.append(league_prem)
 
-    league_champ = League("Championship", "CH")
+    league_champ = League("Championship", "CH", ranking=2)
     league_champ.clubs = all_clubs[16:32]
     world.competitions.append(league_champ)
 
-    cup = Cup("League Cup", "LC")
+    cup = Cup("League Cup", "LC", ranking=100)
     cup.clubs = all_clubs[:32]
     world.competitions.append(cup)
 
@@ -168,11 +181,12 @@ class WorldWorker:
 
     def results_for_competition(self, competition: Competition):
         all_results = []
-        for week_results in self.world.current_season.match_results.weeks.values():
-            for result in week_results:
-                if result.competition == competition:
-                    all_results.append(result)
-        return all_results
+        if self.world.current_season:
+            for week_results in self.world.current_season.match_results.weeks.values():
+                for result in week_results:
+                    if result.competition == competition:
+                        all_results.append(result)
+            return all_results
 
     def get_next_fixtures(self):
         next_week = self.world.world_time.week

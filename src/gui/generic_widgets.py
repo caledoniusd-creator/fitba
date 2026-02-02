@@ -37,13 +37,13 @@ class WidgetList(QWidget):
 
         title_lbl = QLabel(title)
         title_lbl.setAlignment(
-            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+            Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop
         )
         change_font(title_lbl, 2, True)
 
         main_layout = QVBoxLayout(self)
         main_layout.addWidget(
-            title_lbl, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+            title_lbl, 0, Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop
         )
         main_layout.addLayout(self.widget_layout)
         main_layout.addStretch(10)
@@ -79,10 +79,10 @@ class WidgetList(QWidget):
 
 
 class PagesWidget(QWidget):
-    def __init__(self, title: str, pages: List[QWidget], parent=None):
+    def __init__(self, title: str, pages: List[QWidget]=list(), parent=None):
         super().__init__(parent=parent)
         self._title = title
-        self._pages = pages
+        self._pages = list(pages)
 
         self._stack = QStackedWidget()
 
@@ -94,14 +94,13 @@ class PagesWidget(QWidget):
         btn_next.setText("\u27a1")
         btn_next.clicked.connect(self.on_next)
 
+        for btn in [btn_back, btn_next]:
+            change_font(btn, 8, True)
+
         btn_layout = QHBoxLayout()
         btn_layout.addStretch(100)
         btn_layout.addWidget(btn_back)
         btn_layout.addWidget(btn_next)
-
-        for p in self._pages:
-            self._stack.addWidget(p)
-        self._stack.setCurrentIndex(0)
 
         self.setWindowTitle(self._title)
         title_lbl = QLabel(self._title)
@@ -115,6 +114,8 @@ class PagesWidget(QWidget):
         layout.addWidget(self._stack, 100)
         layout.addLayout(btn_layout)
 
+        self.set_pages(pages)
+
     def on_back(self):
         ix = (self._stack.currentIndex() - 1) % self._stack.count()
         self._stack.setCurrentIndex(ix)
@@ -122,6 +123,21 @@ class PagesWidget(QWidget):
     def on_next(self):
         ix = (self._stack.currentIndex() + 1) % self._stack.count()
         self._stack.setCurrentIndex(ix)
+
+    def set_pages(self, pages: List[QWidget] | None = None):
+        for w in self._pages:
+            self._stack.removeWidget(w)
+            w.deleteLater()
+
+        self._pages.clear()
+
+        for p in pages:
+            self._pages.append(p)
+            self._stack.addWidget(p)
+
+        if self._stack.count():
+            self._stack.setCurrentIndex(0)
+        self.setEnabled(True if self._stack.count() > 0 else False)
 
 
 class PagesDialog(QDialog):

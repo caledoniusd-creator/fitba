@@ -81,16 +81,16 @@ class ResultLabel(FixtureLabel):
 
 
 class FixtureList(WidgetList):
-    def __init__(self, auto_hide: bool = False, parent=None):
-        super().__init__("Fixtures", auto_hide=auto_hide, parent=parent)
+    def __init__(self, title: str="Fixtures", auto_hide: bool = False, parent=None):
+        super().__init__(title=title, auto_hide=auto_hide, parent=parent)
 
     def set_fixtures(self, fixtures: List[Fixture] = []):
         self.set_widgets([FixtureLabel(f) for f in fixtures])
 
 
 class ResultsList(WidgetList):
-    def __init__(self, auto_hide: bool = False, parent=None):
-        super().__init__("Results", auto_hide=auto_hide, parent=parent)
+    def __init__(self, title: str="results", auto_hide: bool = False, parent=None):
+        super().__init__(title=title, auto_hide=auto_hide, parent=parent)
 
     def set_results(self, results: List[Result] = []):
         self.set_widgets([ResultLabel(r) for r in results])
@@ -99,10 +99,11 @@ class ResultsList(WidgetList):
 class LeagueTableWidget(QFrame):
     def __init__(self, competition: League, table_data: List, parent=None):
         super().__init__(parent)
+        change_font(self, 4)
         self.setFrameStyle(QFrame.Shape.Box | QFrame.Shadow.Plain)
         table_layout = QGridLayout()
 
-        change_font(self, 2)
+        
 
         left_edge = 0
         num_col = 1

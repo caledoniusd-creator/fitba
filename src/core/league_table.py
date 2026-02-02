@@ -60,12 +60,13 @@ class LeagueTableWorker:
         self._process_results()
 
     def _process_results(self):
-        for result in self.results:
-            entry_home = self.table_entries[result.club1]
-            entry_away = self.table_entries[result.club2]
+        if self.results:
+            for result in self.results:
+                entry_home = self.table_entries[result.club1]
+                entry_away = self.table_entries[result.club2]
 
-            entry_home.record_result(result.home_score, result.away_score)
-            entry_away.record_result(result.away_score, result.home_score)
+                entry_home.record_result(result.home_score, result.away_score)
+                entry_away.record_result(result.away_score, result.home_score)
 
     def get_sorted_table(self):
         return sorted(
@@ -77,8 +78,12 @@ class LeagueTableWorker:
             ),
             reverse=True,
         )
+      
 
     def table_text(self):
+        if self.results:
+            return []
+        
         columns = ["-" * 24, "---", "---", "---", "---", "---", "---", "---"]
         separator = "|-" + "-|-".join(columns) + "-|"
         top_line = separator.replace("|", "-")
