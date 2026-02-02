@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import names
-from random import randint, gauss
+from random import gauss
 
 
 @dataclass
@@ -30,9 +30,10 @@ class Person:
 
 
 class PersonFactory:
-
     @staticmethod
-    def generate_age(min_age: int, max_age: int, average: float, std_dev: float | None = None) -> int:
+    def generate_age(
+        min_age: int, max_age: int, average: float, std_dev: float | None = None
+    ) -> int:
         """
         Generate an age using a bell curve (normal distribution),
         constrained to [min_age, max_age].
@@ -53,21 +54,26 @@ class PersonFactory:
     @staticmethod
     def random_male(min_age=18, max_age=65, average=40):
         name = Name(names.get_first_name(gender="male"), names.get_last_name())
-        age = PersonFactory.generate_age(min_age=min_age, max_age=max_age, average=average)
+        age = PersonFactory.generate_age(
+            min_age=min_age, max_age=max_age, average=average
+        )
 
         return Person(name, age)
-    
+
     @staticmethod
     def random_staff(min_age=35, max_age=60, average=42):
-        return PersonFactory.random_male(min_age=min_age, max_age=max_age, average=average)
-    
+        return PersonFactory.random_male(
+            min_age=min_age, max_age=max_age, average=average
+        )
+
     @staticmethod
     def random_player(min_age=18, max_age=30, average=24):
-        return PersonFactory.random_male(min_age=min_age, max_age=max_age, average=average)
+        return PersonFactory.random_male(
+            min_age=min_age, max_age=max_age, average=average
+        )
 
 
 class PersonPool:
-
     def __init__(self):
         self.people = set()
 
@@ -83,8 +89,6 @@ class PersonPool:
     @property
     def count(self):
         return len(self.people)
-    
-
 
 
 def persons_main():

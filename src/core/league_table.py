@@ -78,12 +78,11 @@ class LeagueTableWorker:
             ),
             reverse=True,
         )
-      
 
     def table_text(self):
         if self.results:
             return []
-        
+
         columns = ["-" * 24, "---", "---", "---", "---", "---", "---", "---"]
         separator = "|-" + "-|-".join(columns) + "-|"
         top_line = separator.replace("|", "-")

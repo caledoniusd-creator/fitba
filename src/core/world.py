@@ -17,7 +17,6 @@ def random_seed():
     return randrange(2**32)
 
 
-
 @dataclass
 class World:
     world_seed: int
@@ -32,7 +31,7 @@ class World:
         self.previous_seasons = self.previous_seasons or []
         self.club_pool = self.club_pool or ClubPool()
         self.competitions = self.competitions or []
-        
+
         rand_seed(self.world_seed)
 
     def __str__(self):
@@ -40,7 +39,6 @@ class World:
 
 
 def create_test_world() -> World:
-    
     world_seed = random_seed()
     print(f"World Seed: {hex(world_seed)}")
 

@@ -48,7 +48,7 @@ class FixtureWorker:
         groups = [(competition, fixtures) for competition, fixtures in groups.items()]
         groups.sort(key=lambda x: x[0].ranking)
         return groups
-    
+
 
 class ResultWorker:
     def __init__(self, results: List[Result]):

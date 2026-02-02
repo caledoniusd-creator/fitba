@@ -9,12 +9,14 @@ class CompetitionType(Enum):
 
 
 class Competition:
-    def __init__(self, name: str, shortname: str, ranking: int, comp_type: CompetitionType):
+    def __init__(
+        self, name: str, shortname: str, ranking: int, comp_type: CompetitionType
+    ):
         self.name = name
         self.shortname = shortname
         self.ranking = ranking
         self.type = comp_type
-    
+
         self.clubs = []
 
     def __str__(self):
@@ -26,7 +28,7 @@ class Competition:
 
 
 class Friendly(Competition):
-    def __init__(self, name: str, shortname: str=""):
+    def __init__(self, name: str, shortname: str = ""):
         super().__init__(name, shortname, 1000, CompetitionType.FRIENDLY)
         self.clubs = []
 
@@ -35,7 +37,6 @@ class League(Competition):
     def __init__(self, name: str, shortname: str, ranking: int):
         super().__init__(name, shortname, ranking, CompetitionType.LEAGUE)
         self.clubs = []
-        
 
 
 class Cup(Competition):

@@ -1,4 +1,3 @@
-
 from typing import List
 
 from PyQt6.QtCore import *
@@ -7,7 +6,7 @@ from PyQt6.QtWidgets import *
 
 
 from core.competition import CompetitionType
-from core.fixture import Fixture, FixtureWorker, Result, ResultWorker
+from core.fixture import FixtureWorker, ResultWorker
 from core.league_table import LeagueTableWorker
 from core.world import WorldState, WorldStateEngine
 
@@ -130,7 +129,6 @@ class GameTabBase(QFrame):
 
             self.set_data()
 
-
     def set_data(self):
         pass
 
@@ -168,7 +166,7 @@ class GameLeagueTableView(GameTabBase):
 class GameClubsView(GameTabBase):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
-    
+
         self._club_list = ClubListWidget()
         self._clubs_widget = ClubListView()
 
@@ -189,16 +187,14 @@ class GameClubsView(GameTabBase):
 
 
 class GameHomeWidget(GameTabBase):
-    
     game_continue = pyqtSignal(name="game continue")
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
 
-
         self.top_bar = GameViewTopBar()
         self.top_bar.game_continue.connect(self.game_continue)
-        
+
         self.world_time_lbl = WorldTimeLabel()
 
         self.season_scroll = SeasonWeekScroll()
@@ -224,7 +220,6 @@ class GameHomeWidget(GameTabBase):
 
 
 class GameViewTabs(QTabWidget):
-
     game_continue = pyqtSignal(name="game continue")
 
     def __init__(self, parent=None):
@@ -266,7 +261,7 @@ class GameViewTabs(QTabWidget):
 
 
 class MajorGameView(QWidget):
-    def __init__(self, title:str="<unamed>", parent=None):
+    def __init__(self, title: str = "<unamed>", parent=None):
         super().__init__(parent)
         lbl = QLabel(title)
         lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -277,12 +272,11 @@ class MajorGameView(QWidget):
 
 
 class NextContinueStackedWidget(QWidget):
-
     game_continue = pyqtSignal(name="game continue")
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        
+
         self._stack_widget = QStackedWidget()
         self.next_btn = QPushButton("Next")
         self.next_btn.clicked.connect(self.on_next)
@@ -300,12 +294,14 @@ class NextContinueStackedWidget(QWidget):
         layout = QVBoxLayout(self)
         layout.addLayout(btn_layout)
         layout.addWidget(self._stack_widget, 100)
-        
+
         self.update_btns()
         self.setEnabled(False)
 
-    def set_pages(self, new_pages: List[QWidget]|None=None):
-        widgets = [self._stack_widget.widget(i) for i in range(self._stack_widget.count())]
+    def set_pages(self, new_pages: List[QWidget] | None = None):
+        widgets = [
+            self._stack_widget.widget(i) for i in range(self._stack_widget.count())
+        ]
         for w in widgets:
             self._stack_widget.removeWidget(w)
             w.deleteLater()
@@ -326,7 +322,7 @@ class NextContinueStackedWidget(QWidget):
         num_pages = self._stack_widget.count()
         if num_pages > 0:
             cur_ix = self._stack_widget.currentIndex()
-            if cur_ix < num_pages -1:
+            if cur_ix < num_pages - 1:
                 self.next_btn.setVisible(True)
                 self.continue_btn.setVisible(False)
             else:
@@ -343,7 +339,6 @@ class NextContinueStackedWidget(QWidget):
         if next_ix < num_pages:
             self._stack_widget.setCurrentIndex(next_ix)
         self.update_btns()
-    
 
 
 class GameView(ViewBase):
@@ -364,7 +359,6 @@ class GameView(ViewBase):
 
         self.game_alt_stack = NextContinueStackedWidget()
         self.game_alt_stack.game_continue.connect(self.game_continue)
-        
 
         self.view_stack.addWidget(self.game_tabs)
         self.view_stack.addWidget(self.game_alt_stack)
@@ -391,14 +385,18 @@ class GameView(ViewBase):
     def invalidate(self):
         if self._world_engine:
             if self._world_engine.state.value == WorldState.NewSeason.value:
-                new_pages = [MajorGameView("New Season"), ]
+                new_pages = [
+                    MajorGameView("New Season"),
+                ]
                 self.game_alt_stack.set_pages(new_pages)
                 self.view_stack.setCurrentWidget(self.game_alt_stack)
 
             elif self._world_engine.state.value == WorldState.PostSeason.value:
-                new_pages = [MajorGameView(f"Post Season {self._world_engine.world_time.year}"), ]
+                new_pages = [
+                    MajorGameView(f"Post Season {self._world_engine.world_time.year}"),
+                ]
                 self.game_alt_stack.set_pages(new_pages)
-                self.view_stack.setCurrentWidget(self.game_alt_stack) 
+                self.view_stack.setCurrentWidget(self.game_alt_stack)
 
             elif self._world_engine.state.value == WorldState.PreFixtures.value:
                 fixtures = self._world_engine.fixtures
@@ -411,13 +409,15 @@ class GameView(ViewBase):
                         fixture_list.set_fixtures(comp_fixtures[1])
                         new_pages.append(fixture_list)
                     self.game_alt_stack.set_pages(new_pages)
-            
+
                 self.view_stack.setCurrentWidget(self.game_alt_stack)
 
             elif self._world_engine.state.value == WorldState.ProcessingFixtures.value:
-                new_pages = [MajorGameView("Processing Fixtures"), ]
+                new_pages = [
+                    MajorGameView("Processing Fixtures"),
+                ]
                 self.game_alt_stack.set_pages(new_pages)
-                self.view_stack.setCurrentWidget(self.game_alt_stack) 
+                self.view_stack.setCurrentWidget(self.game_alt_stack)
 
             elif self._world_engine.state.value == WorldState.PostFixtures.value:
                 results = self._world_engine.results
@@ -430,14 +430,13 @@ class GameView(ViewBase):
                         result_list.set_results(comp_result[1])
                         new_pages.append(result_list)
                     self.game_alt_stack.set_pages(new_pages)
-            
+
                 self.view_stack.setCurrentWidget(self.game_alt_stack)
 
             else:
                 self.view_stack.setCurrentWidget(self.game_tabs)
         else:
             self.view_stack.setCurrentWidget(self.game_tabs)
-
 
         self.game_tabs.invalidate()
 
@@ -456,4 +455,3 @@ class GameView(ViewBase):
             self.main_menu.emit()
         else:
             super().keyReleaseEvent(event)
-

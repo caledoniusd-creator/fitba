@@ -79,7 +79,7 @@ class WidgetList(QWidget):
 
 
 class PagesWidget(QWidget):
-    def __init__(self, title: str, pages: List[QWidget]=list(), parent=None):
+    def __init__(self, title: str, pages: List[QWidget] = list(), parent=None):
         super().__init__(parent=parent)
         self._title = title
         self._pages = list(pages)

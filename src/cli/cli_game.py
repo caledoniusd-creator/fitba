@@ -13,7 +13,6 @@ from core.world import create_test_world, WorldWorker
 from .cli import clear_console
 
 
-
 @unique
 class GameState(Enum):
     Continue = auto()
