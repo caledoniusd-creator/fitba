@@ -414,6 +414,11 @@ class GameView(ViewBase):
             
                 self.view_stack.setCurrentWidget(self.game_alt_stack)
 
+            elif self._world_engine.state.value == WorldState.ProcessingFixtures.value:
+                new_pages = [MajorGameView("Processing Fixtures"), ]
+                self.game_alt_stack.set_pages(new_pages)
+                self.view_stack.setCurrentWidget(self.game_alt_stack) 
+
             elif self._world_engine.state.value == WorldState.PostFixtures.value:
                 results = self._world_engine.results
                 new_pages = list()
@@ -427,7 +432,7 @@ class GameView(ViewBase):
                     self.game_alt_stack.set_pages(new_pages)
             
                 self.view_stack.setCurrentWidget(self.game_alt_stack)
-                
+
             else:
                 self.view_stack.setCurrentWidget(self.game_tabs)
         else:

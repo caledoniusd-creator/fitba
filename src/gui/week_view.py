@@ -121,3 +121,5 @@ class SeasonWeekScroll(QScrollArea):
         widget = self._season_view.week_widget()
         if widget:
             self.ensureWidgetVisible(widget)
+
+

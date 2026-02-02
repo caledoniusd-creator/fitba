@@ -204,6 +204,7 @@ class WorldState(Enum):
     NewSeason = auto()
     PostSeason = auto()
     PreFixtures = auto()
+    ProcessingFixtures = auto()
     PostFixtures = auto()
     AwaitingContinue = auto()
 
@@ -265,6 +266,10 @@ class WorldStateEngine:
 
         elif self.state == WorldState.PreFixtures:
             print("Pre Fixtures")
+            self.state = WorldState.ProcessingFixtures
+
+        elif self.state == WorldState.ProcessingFixtures:
+            print("Processing Fixtures")
             self._results = self.world_worker.process_fixtures(
                 self._fixtures, self.world_time.week
             )
