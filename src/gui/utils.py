@@ -8,3 +8,13 @@ def change_font(widget: QWidget, increment: int, bold: bool = False):
     font.setBold(bold)
     font.setPointSize(font.pointSize() + increment)
     widget.setFont(font)
+
+def hline():
+    frame = QFrame()
+    frame.setFrameStyle(QFrame.Shape.HLine | QFrame.Shadow.Plain)
+    return frame
+
+def vline():
+    frame = QFrame()
+    frame.setFrameStyle(QFrame.Shape.VLine | QFrame.Shadow.Plain)
+    return frame

@@ -79,6 +79,27 @@ class WidgetList(QWidget):
 
 
 class PagesWidget(QWidget):
+    """
+    A QWidget that displays a collection of pages with navigation controls.
+    This widget manages multiple pages (QWidget instances) in a stacked layout,
+    providing back and next buttons to navigate between them. Pages cycle around
+    when reaching the end or beginning.
+    Attributes:
+        _title (str): The title of the widget displayed at the top.
+        _pages (List[QWidget]): List of page widgets managed by this widget.
+        _stack (QStackedWidget): The stacked widget containing all pages.
+    Methods:
+        __init__(title: str, pages: List[QWidget] = list(), parent=None):
+            Initialize the PagesWidget with a title and optional list of pages.
+        on_back():
+            Navigate to the previous page. Wraps around to the last page if on the first page.
+        on_next():
+            Navigate to the next page. Wraps around to the first page if on the last page.
+        set_pages(pages: List[QWidget] | None = None):
+            Replace the current pages with a new list of pages. Cleans up old pages
+            and updates the stacked widget. Disables the widget if no pages are provided.
+    """
+    
     def __init__(self, title: str, pages: List[QWidget] = list(), parent=None):
         super().__init__(parent=parent)
         self._title = title
@@ -147,3 +168,73 @@ class PagesDialog(QDialog):
 
         layout = QVBoxLayout(self)
         layout.addWidget(self.pages, 1)
+
+
+class NextContinueStackedWidget(QWidget):
+    continue_pressed = pyqtSignal(name="continue_pressed")
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self._stack_widget = QStackedWidget()
+        self.next_btn = QPushButton("Next")
+        self.next_btn.clicked.connect(self.on_next)
+        self.continue_btn = QPushButton("Continue")
+        self.continue_btn.clicked.connect(self.continue_pressed)
+
+        for btn in [self.next_btn, self.continue_btn]:
+            change_font(btn, 2, True)
+
+        btn_layout = QHBoxLayout()
+        btn_layout.addStretch(100)
+        btn_layout.addWidget(self.next_btn, 0)
+        btn_layout.addWidget(self.continue_btn, 0)
+
+        layout = QVBoxLayout(self)
+        layout.addLayout(btn_layout)
+        layout.addWidget(self._stack_widget, 100)
+
+        self.update_btns()
+        self.setEnabled(False)
+
+    def set_pages(self, new_pages: List[QWidget] | None = None):
+        widgets = [
+            self._stack_widget.widget(i) for i in range(self._stack_widget.count())
+        ]
+        for w in widgets:
+            self._stack_widget.removeWidget(w)
+            w.deleteLater()
+
+        if new_pages:
+            for page in new_pages:
+                self._stack_widget.addWidget(page)
+
+        self.update_btns()
+
+        if self._stack_widget.count() > 0:
+            self._stack_widget.setCurrentIndex(0)
+            self.setEnabled(True)
+        else:
+            self.setEnabled(False)
+
+    def update_btns(self):
+        num_pages = self._stack_widget.count()
+        if num_pages > 0:
+            cur_ix = self._stack_widget.currentIndex()
+            if cur_ix < num_pages - 1:
+                self.next_btn.setVisible(True)
+                self.continue_btn.setVisible(False)
+            else:
+                self.next_btn.setVisible(False)
+                self.continue_btn.setVisible(True)
+        else:
+            self.next_btn.setVisible(False)
+            self.continue_btn.setVisible(True)
+
+    def on_next(self):
+        num_pages = self._stack_widget.count()
+        cur_ix = self._stack_widget.currentIndex()
+        next_ix = cur_ix + 1
+        if next_ix < num_pages:
+            self._stack_widget.setCurrentIndex(next_ix)
+        self.update_btns()

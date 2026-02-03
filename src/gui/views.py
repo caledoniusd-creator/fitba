@@ -11,8 +11,8 @@ from core.league_table import LeagueTableWorker
 from core.world import WorldState, WorldStateEngine
 
 
-from .utils import change_font
-from .generic_widgets import PagesWidget
+from .utils import change_font, hline
+from .generic_widgets import PagesWidget, NextContinueStackedWidget
 from .view_widgets import (
     WorldTimeLabel,
     FixtureList,
@@ -21,6 +21,7 @@ from .view_widgets import (
     ClubListWidget,
     ClubListView,
 )
+from .club_widgets import ClubListWidget, ClubInfoWidget
 from .week_view import SeasonWeekScroll
 
 
@@ -186,6 +187,34 @@ class GameClubsView(GameTabBase):
         pass
 
 
+class GameClubView(GameTabBase):
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
+
+        self._club_list = ClubListWidget()
+        self._club_list.selected_clubs.connect(self.on_current_club_changed)
+
+        self._club_info = ClubInfoWidget()
+
+        layout = QHBoxLayout(self)
+        layout.addWidget(self._club_list, 0, Qt.AlignmentFlag.AlignLeft)
+        layout.addWidget(self._club_info, 1000)
+        
+
+    def set_data(self):
+        clubs = self._world_engine.world.club_pool.get_all_clubs() if self._world_engine else []
+        self._club_list.set_clubs(clubs)
+        
+        item = self._club_list.currentItem()
+        self._club_info.set_club(item.data(Qt.ItemDataRole.UserRole) if item else None)
+
+    def invalidate(self):
+        self._club_info.invalidate()
+    
+    def on_current_club_changed(self, clubs):
+        self._club_info.set_club(clubs[0])
+
+
 class GameHomeWidget(GameTabBase):
     game_continue = pyqtSignal(name="game continue")
 
@@ -199,24 +228,43 @@ class GameHomeWidget(GameTabBase):
 
         self.season_scroll = SeasonWeekScroll()
 
-        self.central_view = QWidget()
+        self.messages_list = QListWidget()
 
         mid_layout = QHBoxLayout()
         mid_layout.addWidget(self.season_scroll, Qt.AlignmentFlag.AlignLeft)
-        mid_layout.addWidget(self.central_view, 100)
+        mid_layout.addWidget(self.messages_list, 100)
 
         layout = QVBoxLayout(self)
         layout.addWidget(self.top_bar)
         layout.addLayout(mid_layout, 100)
 
-    # def set_data(self):
-    #     self.central_view.world_engine = self.world_engine
-
     def invalidate(self):
         self.top_bar.invalidate(self.world_engine)
         if self._world_engine:
             self.season_scroll.set_current_week(self._world_engine.world_time.week)
-        # self.central_view.invalidate()
+        
+        self._update_messages()
+
+    def _get_messages(self):
+        messages = []
+        if self._world_engine:
+            current_fixtures = self._world_engine.world_worker.get_current_fixtures()
+            if current_fixtures:
+                messages.append(f"{len(current_fixtures)} fixtures pending.")
+
+            current_season = self._world_engine.world.current_season
+            if current_season:
+                 messages.append(f"# Remaing Fixtures: {current_season.fixture_calendar.count}, # Results: {current_season.match_results.count}")
+        else:
+            messages.append("WARNING: No world engine !!!!")
+
+        return messages
+
+    def _update_messages(self):
+        self.messages_list.clear()
+        for message in self._get_messages():
+            self.messages_list.addItem(QListWidgetItem(message))
+
 
 
 class GameViewTabs(QTabWidget):
@@ -236,9 +284,12 @@ class GameViewTabs(QTabWidget):
         self._league_tables_widget = GameLeagueTableView()
         self.addTab(self._league_tables_widget, "League Tables")
 
+        self._club_view_widget = GameClubView()
+        self.addTab(self._club_view_widget, "Club")
+
         self.invalidate()
         self.setCurrentIndex(0)
-        QApplication.instance().processEvents()
+        # QApplication.instance().processEvents()
 
     @property
     def world_engine(self):
@@ -271,76 +322,6 @@ class MajorGameView(QWidget):
         layout.addWidget(lbl, 100, Qt.AlignmentFlag.AlignCenter)
 
 
-class NextContinueStackedWidget(QWidget):
-    game_continue = pyqtSignal(name="game continue")
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-
-        self._stack_widget = QStackedWidget()
-        self.next_btn = QPushButton("Next")
-        self.next_btn.clicked.connect(self.on_next)
-        self.continue_btn = QPushButton("Continue")
-        self.continue_btn.clicked.connect(self.game_continue)
-
-        for btn in [self.next_btn, self.continue_btn]:
-            change_font(btn, 2, True)
-
-        btn_layout = QHBoxLayout()
-        btn_layout.addStretch(100)
-        btn_layout.addWidget(self.next_btn, 0)
-        btn_layout.addWidget(self.continue_btn, 0)
-
-        layout = QVBoxLayout(self)
-        layout.addLayout(btn_layout)
-        layout.addWidget(self._stack_widget, 100)
-
-        self.update_btns()
-        self.setEnabled(False)
-
-    def set_pages(self, new_pages: List[QWidget] | None = None):
-        widgets = [
-            self._stack_widget.widget(i) for i in range(self._stack_widget.count())
-        ]
-        for w in widgets:
-            self._stack_widget.removeWidget(w)
-            w.deleteLater()
-
-        if new_pages:
-            for page in new_pages:
-                self._stack_widget.addWidget(page)
-
-        self.update_btns()
-
-        if self._stack_widget.count() > 0:
-            self._stack_widget.setCurrentIndex(0)
-            self.setEnabled(True)
-        else:
-            self.setEnabled(False)
-
-    def update_btns(self):
-        num_pages = self._stack_widget.count()
-        if num_pages > 0:
-            cur_ix = self._stack_widget.currentIndex()
-            if cur_ix < num_pages - 1:
-                self.next_btn.setVisible(True)
-                self.continue_btn.setVisible(False)
-            else:
-                self.next_btn.setVisible(False)
-                self.continue_btn.setVisible(True)
-        else:
-            self.next_btn.setVisible(False)
-            self.continue_btn.setVisible(True)
-
-    def on_next(self):
-        num_pages = self._stack_widget.count()
-        cur_ix = self._stack_widget.currentIndex()
-        next_ix = cur_ix + 1
-        if next_ix < num_pages:
-            self._stack_widget.setCurrentIndex(next_ix)
-        self.update_btns()
-
-
 class GameView(ViewBase):
     main_menu = pyqtSignal(name="main menu")
     world_changed = pyqtSignal(name="world_changed")
@@ -358,7 +339,7 @@ class GameView(ViewBase):
         self.game_tabs.game_continue.connect(self.game_continue)
 
         self.game_alt_stack = NextContinueStackedWidget()
-        self.game_alt_stack.game_continue.connect(self.game_continue)
+        self.game_alt_stack.continue_pressed.connect(self.game_continue)
 
         self.view_stack.addWidget(self.game_tabs)
         self.view_stack.addWidget(self.game_alt_stack)
@@ -429,8 +410,8 @@ class GameView(ViewBase):
                         result_list = ResultsList(title=title, auto_hide=False)
                         result_list.set_results(comp_result[1])
                         new_pages.append(result_list)
-                    self.game_alt_stack.set_pages(new_pages)
-
+                    
+                self.game_alt_stack.set_pages(new_pages)
                 self.view_stack.setCurrentWidget(self.game_alt_stack)
 
             else:

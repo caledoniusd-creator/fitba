@@ -72,11 +72,12 @@ class LeagueTableWorker:
         return sorted(
             self.table_entries.values(),
             key=lambda entry: (
-                entry.points,
-                entry.goal_diff,
-                entry.goals_for,
+                -entry.points,
+                -entry.goal_diff,
+                -entry.goals_for,
+                entry.club.name
             ),
-            reverse=True,
+            reverse=False,
         )
 
     def table_text(self):

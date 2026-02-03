@@ -72,6 +72,9 @@ class GUIApplication(QApplication):
 
         try:
             rc = self.exec()
+
+            if rc != 0:
+                print(f"Exit code non-zero ! {rc}")
         except Exception as e:
             print(format_exc())
             print(e)
