@@ -4,7 +4,7 @@ from PyQt6.QtGui import *
 from PyQt6.QtWidgets import *
 
 
-from .utils import change_font
+from .utils import change_font, hline
 
 
 from .viewbase import ViewBase
@@ -35,16 +35,17 @@ class MainMenuView(ViewBase):
 
         for btn in [new_game_btn, load_game_btn, quit_game_btn]:
             change_font(btn, 8, True)
+            btn.setFixedWidth(256)
+
         button_layout = QVBoxLayout()
-        button_layout.addWidget(title)
-        button_layout.addStretch(10)
-        button_layout.addWidget(new_game_btn, 0)
-        button_layout.addWidget(load_game_btn)
-        button_layout.addWidget(quit_game_btn)
-        button_layout.addStretch(10)
+        button_layout.addStretch(25)
+        button_layout.addWidget(new_game_btn, 0, Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+        button_layout.addWidget(load_game_btn, 0, Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+        button_layout.addWidget(quit_game_btn, 0, Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+        button_layout.addStretch(50)
 
-        layout = QHBoxLayout(self)
+        layout = QVBoxLayout(self)
 
-        layout.addStretch(10)
+        layout.addWidget(title)
+        layout.addWidget(hline())
         layout.addLayout(button_layout)
-        layout.addStretch(10)

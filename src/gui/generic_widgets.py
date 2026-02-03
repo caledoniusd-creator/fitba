@@ -6,7 +6,7 @@ from PyQt6.QtGui import *
 from PyQt6.QtWidgets import *
 
 
-from .utils import change_font
+from .utils import change_font, hline
 
 
 class WidgetList(QWidget):
@@ -188,6 +188,7 @@ class NextContinueStackedWidget(QWidget):
 
         layout = QVBoxLayout(self)
         layout.addLayout(btn_layout)
+        layout.addWidget(hline())
         layout.addWidget(self._stack_widget, 100)
 
         self.update_btns()
