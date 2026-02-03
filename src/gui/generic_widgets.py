@@ -36,15 +36,11 @@ class WidgetList(QWidget):
         )
 
         title_lbl = QLabel(title)
-        title_lbl.setAlignment(
-            Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop
-        )
+        title_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         change_font(title_lbl, 2, True)
 
         main_layout = QVBoxLayout(self)
-        main_layout.addWidget(
-            title_lbl, 0, Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop
-        )
+        main_layout.addWidget(title_lbl, 0, Qt.AlignmentFlag.AlignCenter)
         main_layout.addLayout(self.widget_layout)
         main_layout.addStretch(10)
 
