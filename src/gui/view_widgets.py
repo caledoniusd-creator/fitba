@@ -32,7 +32,6 @@ class FixtureLabel(QFrame):
     def __init__(self, fixture: Fixture, parent=None):
         super().__init__(parent)
         self.setFrameStyle(QFrame.Shape.StyledPanel | QFrame.Shadow.Plain)
-
         change_font(self, 4)
 
         palette = QPalette(self.palette())
@@ -96,7 +95,7 @@ class FixtureList(WidgetList):
 
 
 class ResultsList(WidgetList):
-    def __init__(self, title: str = "results", auto_hide: bool = False, parent=None):
+    def __init__(self, title: str = "Results", auto_hide: bool = False, parent=None):
         super().__init__(title=title, auto_hide=auto_hide, parent=parent)
 
     def set_results(self, results: List[Result] = []):
