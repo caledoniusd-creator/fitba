@@ -23,51 +23,7 @@ from .view_widgets import (
 )
 from .club_widgets import ClubsListWidget, ClubInfoWidget
 from .week_view import SeasonWeekScroll
-
-
-class ViewBase(QWidget):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-
-
-class MainMenuView(ViewBase):
-    new_game = pyqtSignal(name="new game")
-    load_game = pyqtSignal(name="load game")
-    quit_game = pyqtSignal(name="quit")
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-
-        self.setWindowTitle("Main Menu")
-
-        title = QLabel(self.windowTitle())
-        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        change_font(title, 16, True)
-
-        new_game_btn = QPushButton("New Game")
-        new_game_btn.clicked.connect(self.new_game)
-
-        load_game_btn = QPushButton("Load Game")
-        load_game_btn.clicked.connect(self.load_game)
-
-        quit_game_btn = QPushButton("Quit")
-        quit_game_btn.clicked.connect(self.quit_game)
-
-        for btn in [new_game_btn, load_game_btn, quit_game_btn]:
-            change_font(btn, 8, True)
-        button_layout = QVBoxLayout()
-        button_layout.addWidget(title)
-        button_layout.addStretch(10)
-        button_layout.addWidget(new_game_btn, 0)
-        button_layout.addWidget(load_game_btn)
-        button_layout.addWidget(quit_game_btn)
-        button_layout.addStretch(10)
-
-        layout = QHBoxLayout(self)
-
-        layout.addStretch(10)
-        layout.addLayout(button_layout)
-        layout.addStretch(10)
+from .viewbase import ViewBase
 
 
 class GameViewTopBar(QFrame):
@@ -229,6 +185,7 @@ class GameHomeWidget(GameTabBase):
         self.season_scroll = SeasonWeekScroll()
 
         self.messages_list = QListWidget()
+        change_font(self.messages_list, 4)
 
         mid_layout = QHBoxLayout()
         mid_layout.addWidget(self.season_scroll, Qt.AlignmentFlag.AlignLeft)
@@ -248,13 +205,15 @@ class GameHomeWidget(GameTabBase):
     def _get_messages(self):
         messages = []
         if self._world_engine:
+            current_season = self._world_engine.world.current_season
+            if current_season:
+                 messages.append(f"{current_season.fixture_calendar.count} remaining Fixtures, {current_season.match_results.count} completed Results")
+
             current_fixtures = self._world_engine.world_worker.get_current_fixtures()
             if current_fixtures:
                 messages.append(f"{len(current_fixtures)} fixtures pending.")
 
-            current_season = self._world_engine.world.current_season
-            if current_season:
-                 messages.append(f"# Remaing Fixtures: {current_season.fixture_calendar.count}, # Results: {current_season.match_results.count}")
+           
         else:
             messages.append("WARNING: No world engine !!!!")
 
@@ -264,7 +223,6 @@ class GameHomeWidget(GameTabBase):
         self.messages_list.clear()
         for message in self._get_messages():
             self.messages_list.addItem(QListWidgetItem(message))
-
 
 
 class GameViewTabs(QTabWidget):
@@ -278,17 +236,18 @@ class GameViewTabs(QTabWidget):
         self._home_widget.game_continue.connect(self.game_continue)
         self.addTab(self._home_widget, "Home")
 
-        self._clubs_widget = GameClubsView()
-        self.addTab(self._clubs_widget, "Clubs")
+        self._club_view_widget = GameClubView()
+        self.addTab(self._club_view_widget, "Club")
 
         self._league_tables_widget = GameLeagueTableView()
         self.addTab(self._league_tables_widget, "League Tables")
 
-        self._club_view_widget = GameClubView()
-        self.addTab(self._club_view_widget, "Club")
+        self._clubs_widget = GameClubsView()
+        self.addTab(self._clubs_widget, "Clubs")
+
 
         self.invalidate()
-        self.setCurrentIndex(0)
+        # self.setCurrentIndex(0)
         # QApplication.instance().processEvents()
 
     @property

@@ -108,6 +108,7 @@ class LeagueTableWidget(QFrame):
         change_font(self, 4)
         self.setFrameStyle(QFrame.Shape.Box | QFrame.Shadow.Plain)
         table_layout = QGridLayout()
+        table_layout.setHorizontalSpacing(16)
 
         left_edge = 0
         num_col = 1
@@ -125,7 +126,7 @@ class LeagueTableWidget(QFrame):
         def title_label(text: str):
             lbl = QLabel(text)
             lbl.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-            change_font(lbl, 0, True)
+            change_font(lbl, 4, True)
             return lbl
 
         row_ix = 0
@@ -153,6 +154,7 @@ class LeagueTableWidget(QFrame):
             club_lbl.setAlignment(
                 Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
             )
+            club_lbl.setFixedWidth(255)
             row_ix += 1
             table_layout.addWidget(
                 title_label(str(ix + 1)),
@@ -182,7 +184,7 @@ class LeagueTableWidget(QFrame):
                     QLabel(str(item[0])),
                     row_ix,
                     item[1],
-                    Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
+                    Qt.AlignmentFlag.AlignCenter,
                 )
 
         row_ix += 1

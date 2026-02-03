@@ -7,7 +7,8 @@ from PyQt6.QtGui import *
 from PyQt6.QtWidgets import *
 
 
-from .views import MainMenuView, GameView
+from .mainmenuview import MainMenuView
+from .game_views import GameView
 
 from src.core.world import create_test_world, WorldStateEngine
 
