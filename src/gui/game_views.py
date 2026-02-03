@@ -11,7 +11,7 @@ from core.league_table import LeagueTableWorker
 from core.world import WorldState, WorldStateEngine
 
 
-from .utils import change_font, hline
+from .utils import change_font
 from .generic_widgets import PagesWidget, NextContinueStackedWidget
 from .view_widgets import (
     WorldTimeLabel,
