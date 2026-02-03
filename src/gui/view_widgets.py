@@ -33,29 +33,36 @@ class FixtureLabel(QFrame):
         super().__init__(parent)
         self.setFrameStyle(QFrame.Shape.StyledPanel | QFrame.Shadow.Plain)
 
+        change_font(self, 4)
+
+        palette = QPalette(self.palette())
+        palette.setColor(QPalette.ColorRole.Window, QColor(255, 255, 255))
+        self.setPalette(palette)
+        self.setAutoFillBackground(True)
+
         comp_label = QLabel(fixture.competition.shortname)
         comp_label.setAlignment(
             Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
         )
-        comp_label.setFixedWidth(64)
-        change_font(comp_label, 0, True)
+        comp_label.setFixedWidth(96)
+        change_font(comp_label, 2, True)
 
         home_team = QLabel(fixture.club1.name)
         home_team.setAlignment(
             Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
         )
-        home_team.setFixedWidth(128)
+        home_team.setFixedWidth(255)
 
         self.vs_label = QLabel("v")
         self.vs_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.vs_label.setFixedWidth(96)
-        change_font(self.vs_label, 0, True)
+        self.vs_label.setFixedWidth(128)
+        change_font(self.vs_label, 2, True)
 
         away_team = QLabel(fixture.club2.name)
         away_team.setAlignment(
             Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
         )
-        away_team.setFixedWidth(128)
+        away_team.setFixedWidth(255)
 
         layout = QHBoxLayout(self)
         layout.addStretch(10)
@@ -199,7 +206,7 @@ class LeagueTableWidget(QFrame):
         layout.addLayout(table_layout)
 
 
-class ClubListWidget(QFrame):
+class ClubsTableListWidget(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setFrameStyle(QFrame.Shape.Box | QFrame.Shadow.Plain)

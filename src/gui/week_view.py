@@ -28,14 +28,22 @@ class WeekView(QFrame):
         super().__init__(parent)
         self.week_number = week_number
         self._selected = False
+        
         self.setFrameStyle(QFrame.Shape.StyledPanel | QFrame.Shadow.Plain)
+        self.setLineWidth(2)
+
         self.setAutoFillBackground(True)
 
+        palette = QPalette(self.palette())
+        palette.setColor(QPalette.ColorRole.Window, QColor(255, 255, 255))
+        self.setPalette(palette)
+        
         self.week_number_label = QLabel(str(self.week_number))
-        change_font(self.week_number_label, 2, True)
+        self.week_number_label.setFixedWidth(32)
         self.week_number_label.setAlignment(
             Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
         )
+        change_font(self.week_number_label, 2, True)
 
         self.days = [DayView() for _ in range(DAYS_IN_WEEK)]
 
@@ -49,7 +57,7 @@ class WeekView(QFrame):
             layout.addWidget(
                 day, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
             )
-        layout.addSpacerItem(QSpacerItem(16, 16))
+        layout.addSpacerItem(QSpacerItem(8, 8))
         self.update_frame()
 
     @property
@@ -69,15 +77,24 @@ class WeekView(QFrame):
             self.selected = not self.selected
 
     def update_frame(self):
-        self.setFrameStyle(
-            QFrame.Shape.Panel
-            | (QFrame.Shadow.Raised if not self.selected else QFrame.Shadow.Sunken)
-        )
+        if self._selected:
+            frame_style = QFrame.Shape.Panel | QFrame.Shadow.Plain
+
+        else:
+            frame_style = QFrame.Shape.StyledPanel | QFrame.Shadow.Plain
+
+        self.setFrameStyle(frame_style)
 
 
 class SeasonView(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
+
+        self.setAutoFillBackground(True)
+
+        palette = QPalette(self.palette())
+        palette.setColor(QPalette.ColorRole.Window, QColor(224, 224, 224))
+        self.setPalette(palette)
 
         self._weeks = [WeekView(i + 1) for i in range(WEEKS_IN_YEAR)]
         self._weeks[0].selected = True

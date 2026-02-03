@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import *
 
 from .utils import change_font, hline
 
-class ClubListWidget(QListWidget):
+class ClubsListWidget(QListWidget):
 
     selected_clubs = pyqtSignal(list, name="selected clubs")
 

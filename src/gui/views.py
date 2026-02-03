@@ -18,10 +18,10 @@ from .view_widgets import (
     FixtureList,
     ResultsList,
     LeagueTableWidget,
-    ClubListWidget,
+    ClubsTableListWidget,
     ClubListView,
 )
-from .club_widgets import ClubListWidget, ClubInfoWidget
+from .club_widgets import ClubsListWidget, ClubInfoWidget
 from .week_view import SeasonWeekScroll
 
 
@@ -76,7 +76,7 @@ class GameViewTopBar(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.setFrameStyle(QFrame.Shape.Box | QFrame.Shadow.Plain)
+        self.setFrameStyle(QFrame.Shape.StyledPanel | QFrame.Shadow.Raised)
 
         self.world_time_lbl = WorldTimeLabel()
         self.state_lbl = QLabel()
@@ -168,7 +168,7 @@ class GameClubsView(GameTabBase):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
 
-        self._club_list = ClubListWidget()
+        self._club_list = ClubsTableListWidget()
         self._clubs_widget = ClubListView()
 
         layout = QVBoxLayout(self)
@@ -191,7 +191,7 @@ class GameClubView(GameTabBase):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
 
-        self._club_list = ClubListWidget()
+        self._club_list = ClubsListWidget()
         self._club_list.selected_clubs.connect(self.on_current_club_changed)
 
         self._club_info = ClubInfoWidget()
