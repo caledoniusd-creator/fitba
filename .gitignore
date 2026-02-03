@@ -10,3 +10,4 @@ wheels/
 .venv
 uv.lock
 data/.~lock.16 team league schedule.ods#
+.coverage
