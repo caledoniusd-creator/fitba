@@ -10,7 +10,7 @@ from PySide6.QtWidgets import *
 from .mainmenuview import MainMenuView
 from .game_views import GameView
 
-from src.core.world import create_test_world, WorldStateEngine
+from src.core.workers import create_test_world, WorldStateEngine
 
 
 @unique

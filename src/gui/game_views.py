@@ -9,7 +9,7 @@ from PySide6.QtWidgets import *
 from core.competition import CompetitionType
 from core.fixture import FixtureWorker, ResultWorker
 from core.league_table import LeagueTableWorker
-from core.world import WorldState, WorldStateEngine
+from core.workers import WorldState, WorldStateEngine
 
 
 from .utils import change_font
@@ -208,7 +208,7 @@ class GameHomeWidget(GameTabBase):
         if self._world_engine:
             current_season = self._world_engine.world.current_season
             if current_season:
-                 messages.append(f"{current_season.fixture_calendar.count} remaining Fixtures, {current_season.match_results.count} completed Results")
+                 messages.append(f"{current_season.fixture_schedule.fixture_count} remaining Fixtures, {current_season.fixture_schedule.result_count} completed Results")
 
             current_fixtures = self._world_engine.world_worker.get_current_fixtures()
             if current_fixtures:

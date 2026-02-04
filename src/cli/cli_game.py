@@ -8,7 +8,7 @@ from core.world_time import WEEKS_IN_YEAR
 from core.competition import CompetitionType
 from core.fixture import Fixture, Result
 from core.league_table import LeagueTableWorker
-from core.world import create_test_world, WorldWorker
+from core.workers import create_test_world, WorldWorker
 
 from .cli import clear_console
 
