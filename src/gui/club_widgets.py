@@ -1,17 +1,19 @@
 
-
 from typing import List
 
-from PyQt6.QtCore import *
-from PyQt6.QtGui import *
-from PyQt6.QtWidgets import *
+
+from PySide6.QtCore import Qt
+from PySide6.QtCore import *
+from PySide6.QtGui import *
+from PySide6.QtWidgets import *
 
 
 from .utils import change_font, hline
 
+
 class ClubsListWidget(QListWidget):
 
-    selected_clubs = pyqtSignal(list, name="selected clubs")
+    selected_clubs = Signal(list, name="selected clubs")
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -19,8 +21,8 @@ class ClubsListWidget(QListWidget):
         
     def on_current_club_changed(self, current: QModelIndex, previous: QModelIndex):
         club = None
-        if current and current.data(Qt.ItemDataRole.UserRole):
-            club = current.data(Qt.ItemDataRole.UserRole)
+        if current and current.data(Qt.UserRole):
+            club = current.data(Qt.UserRole)
         self.selected_clubs.emit([club])
 
     def set_clubs(self, clubs: List=[]):
@@ -28,7 +30,7 @@ class ClubsListWidget(QListWidget):
 
         def listItem(text: str, payload: any = None):
             item = QListWidgetItem(text)
-            item.setData(Qt.ItemDataRole.UserRole, payload)
+            item.setData(Qt.UserRole, payload)
             return item
 
         self.addItem(listItem("None"))
@@ -41,17 +43,17 @@ class ClubsListWidget(QListWidget):
 class ClubInfoWidget(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setFrameStyle(QFrame.Shape.Box | QFrame.Shadow.Plain)
+        self.setFrameStyle(QFrame.Box | QFrame.Plain)
 
 
         self._club = None
 
         self._club_title = QLabel()
-        self._club_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._club_title.setAlignment(Qt.AlignCenter)
         change_font(self._club_title, 12, True)
 
         self._squad_rating = QLabel()
-        self._squad_rating.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        self._squad_rating.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         change_font(self._squad_rating, 4)
 
         squad_rating_title = QLabel("Squad Rating")
@@ -66,9 +68,9 @@ class ClubInfoWidget(QFrame):
             t_label = QLabel(title)
             change_font(t_label, 8, True)
             frame = QFrame()
-            frame.setFrameStyle(QFrame.Shape.StyledPanel | QFrame.Shadow.Raised)
+            frame.setFrameStyle(QFrame.StyledPanel | QFrame.Raised)
             frame_layout = QVBoxLayout(frame)
-            frame_layout.addWidget(t_label, 0, Qt.AlignmentFlag.AlignCenter)
+            frame_layout.addWidget(t_label, 0, Qt.AlignCenter)
             frame_layout.addWidget(widget, 1000)
             return frame
         
@@ -77,7 +79,7 @@ class ClubInfoWidget(QFrame):
         self._results_list = QListWidget()
 
         info_frame = QFrame()
-        info_frame.setFrameStyle(QFrame.Shape.StyledPanel | QFrame.Shadow.Raised)
+        info_frame.setFrameStyle(QFrame.StyledPanel | QFrame.Raised)
         info_frame_layout = QHBoxLayout(info_frame)
         for t, w in zip(["Competitions", "Fixtures", "Results"], [self._competition_list, self._fixtures_list, self._results_list]):
             info_frame_layout.addWidget(list_group(t, w))
@@ -85,7 +87,7 @@ class ClubInfoWidget(QFrame):
 
 
         layout = QVBoxLayout(self)
-        layout.addWidget(self._club_title, 0, Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+        layout.addWidget(self._club_title, 0, Qt.AlignHCenter | Qt.AlignTop)
         layout.addWidget(hline())
         layout.addLayout(squad_rating_layout)
         layout.addWidget(info_frame, 10)

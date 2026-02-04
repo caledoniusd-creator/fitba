@@ -1,9 +1,9 @@
 from typing import List
 
-
-from PyQt6.QtCore import *
-from PyQt6.QtGui import *
-from PyQt6.QtWidgets import *
+from PySide6.QtCore import Qt
+from PySide6.QtCore import *
+from PySide6.QtGui import *
+from PySide6.QtWidgets import *
 
 
 from .utils import change_font, hline
@@ -24,7 +24,7 @@ class WidgetList(QWidget):
     def __init__(
         self,
         title: str,
-        orientation: Qt.Orientation = Qt.Orientation.Vertical,
+        orientation: Qt.Orientation = Qt.Vertical,
         auto_hide: bool = False,
         parent=None,
     ):
@@ -32,15 +32,15 @@ class WidgetList(QWidget):
         self._auto_hide = auto_hide
         self._widgets = []
         self.widget_layout = (
-            QVBoxLayout() if orientation == Qt.Orientation.Vertical else QHBoxLayout()
+            QVBoxLayout() if orientation == Qt.Vertical else QHBoxLayout()
         )
 
         title_lbl = QLabel(title)
-        title_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        title_lbl.setAlignment(Qt.AlignCenter)
         change_font(title_lbl, 2, True)
 
         main_layout = QVBoxLayout(self)
-        main_layout.addWidget(title_lbl, 0, Qt.AlignmentFlag.AlignCenter)
+        main_layout.addWidget(title_lbl, 0, Qt.AlignCenter)
         main_layout.addLayout(self.widget_layout)
         main_layout.addStretch(10)
 
@@ -68,7 +68,7 @@ class WidgetList(QWidget):
         for w in widgets:
             self._widgets.append(w)
             self.widget_layout.addWidget(
-                w, 0, Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop
+                w, 0, Qt.AlignHCenter | Qt.AlignTop
             )
 
         self.update_visibility()
@@ -121,12 +121,12 @@ class PagesWidget(QWidget):
 
         self.setWindowTitle(self._title)
         title_lbl = QLabel(self._title)
-        title_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        title_lbl.setAlignment(Qt.AlignCenter)
         change_font(title_lbl, 4, True)
 
         layout = QVBoxLayout(self)
         layout.addWidget(
-            title_lbl, 0, Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop
+            title_lbl, 0, Qt.AlignHCenter | Qt.AlignTop
         )
         layout.addWidget(self._stack, 100)
         layout.addLayout(btn_layout)
@@ -167,7 +167,7 @@ class PagesDialog(QDialog):
 
 
 class NextContinueStackedWidget(QWidget):
-    continue_pressed = pyqtSignal(name="continue_pressed")
+    continue_pressed = Signal(name="continue_pressed")
 
     def __init__(self, parent=None):
         super().__init__(parent)

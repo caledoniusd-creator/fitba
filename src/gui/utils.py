@@ -1,6 +1,8 @@
-from PyQt6.QtCore import *
-from PyQt6.QtGui import *
-from PyQt6.QtWidgets import *
+
+from PySide6.QtCore import Qt
+from PySide6.QtCore import *
+from PySide6.QtGui import *
+from PySide6.QtWidgets import *
 
 
 def change_font(widget: QWidget, increment: int, bold: bool = False):
@@ -11,10 +13,10 @@ def change_font(widget: QWidget, increment: int, bold: bool = False):
 
 def hline():
     frame = QFrame()
-    frame.setFrameStyle(QFrame.Shape.HLine | QFrame.Shadow.Plain)
+    frame.setFrameStyle(QFrame.HLine | QFrame.Plain)
     return frame
 
 def vline():
     frame = QFrame()
-    frame.setFrameStyle(QFrame.Shape.VLine | QFrame.Shadow.Plain)
+    frame.setFrameStyle(QFrame.VLine | QFrame.Plain)
     return frame

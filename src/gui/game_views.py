@@ -1,8 +1,9 @@
 from typing import List
 
-from PyQt6.QtCore import *
-from PyQt6.QtGui import *
-from PyQt6.QtWidgets import *
+from PySide6.QtCore import Qt
+from PySide6.QtCore import *
+from PySide6.QtGui import *
+from PySide6.QtWidgets import *
 
 
 from core.competition import CompetitionType
@@ -27,12 +28,12 @@ from .viewbase import ViewBase
 
 
 class GameViewTopBar(QFrame):
-    game_continue = pyqtSignal(name="game continue")
+    game_continue = Signal(name="game continue")
 
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.setFrameStyle(QFrame.Shape.StyledPanel | QFrame.Shadow.Raised)
+        self.setFrameStyle(QFrame.StyledPanel | QFrame.Raised)
 
         self.world_time_lbl = WorldTimeLabel()
         self.state_lbl = QLabel()
@@ -45,16 +46,16 @@ class GameViewTopBar(QFrame):
         layout.addWidget(
             self.world_time_lbl,
             0,
-            Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter,
+            Qt.AlignRight | Qt.AlignVCenter,
         )
         layout.addStretch(100)
         layout.addWidget(
             self.state_lbl,
             0,
-            Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter,
+            Qt.AlignRight | Qt.AlignVCenter,
         )
         layout.addWidget(
-            continue_btn, 0, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+            continue_btn, 0, Qt.AlignRight | Qt.AlignVCenter
         )
 
     def invalidate(self, world_engine: WorldStateEngine):
@@ -73,7 +74,7 @@ class GameTabBase(QFrame):
         super().__init__(parent=parent)
         self._world_engine: WorldStateEngine | None = None
 
-        self.setFrameStyle(QFrame.Shape.Box | QFrame.Shadow.Plain)
+        self.setFrameStyle(QFrame.Box | QFrame.Plain)
 
     @property
     def world_engine(self):
@@ -153,7 +154,7 @@ class GameClubView(GameTabBase):
         self._club_info = ClubInfoWidget()
 
         layout = QHBoxLayout(self)
-        layout.addWidget(self._club_list, 0, Qt.AlignmentFlag.AlignLeft)
+        layout.addWidget(self._club_list, 0, Qt.AlignLeft)
         layout.addWidget(self._club_info, 1000)
         
 
@@ -172,7 +173,7 @@ class GameClubView(GameTabBase):
 
 
 class GameHomeWidget(GameTabBase):
-    game_continue = pyqtSignal(name="game continue")
+    game_continue = Signal(name="game continue")
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -188,7 +189,7 @@ class GameHomeWidget(GameTabBase):
         change_font(self.messages_list, 4)
 
         mid_layout = QHBoxLayout()
-        mid_layout.addWidget(self.season_scroll, Qt.AlignmentFlag.AlignLeft)
+        mid_layout.addWidget(self.season_scroll, Qt.AlignLeft)
         mid_layout.addWidget(self.messages_list, 100)
 
         layout = QVBoxLayout(self)
@@ -226,7 +227,7 @@ class GameHomeWidget(GameTabBase):
 
 
 class GameViewTabs(QTabWidget):
-    game_continue = pyqtSignal(name="game continue")
+    game_continue = Signal(name="game continue")
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -274,17 +275,17 @@ class MajorGameView(QWidget):
     def __init__(self, title: str = "<unamed>", parent=None):
         super().__init__(parent)
         lbl = QLabel(title)
-        lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        lbl.setAlignment(Qt.AlignCenter)
         change_font(lbl, 12, True)
 
         layout = QVBoxLayout(self)
-        layout.addWidget(lbl, 100, Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(lbl, 100, Qt.AlignCenter)
 
 
 class GameView(ViewBase):
-    main_menu = pyqtSignal(name="main menu")
-    world_changed = pyqtSignal(name="world_changed")
-    game_continue = pyqtSignal(name="game continue")
+    main_menu = Signal(name="main menu")
+    world_changed = Signal(name="world_changed")
+    game_continue = Signal(name="game continue")
 
     def __init__(self, parent=None):
         super().__init__(parent)

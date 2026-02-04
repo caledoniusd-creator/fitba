@@ -1,6 +1,9 @@
-from PyQt6.QtCore import *
-from PyQt6.QtGui import *
-from PyQt6.QtWidgets import *
+
+from PySide6.QtCore import Qt
+from PySide6.QtCore import *
+from PySide6.QtGui import *
+from PySide6.QtWidgets import *
+
 
 
 from core.world_time import DAYS_IN_WEEK, WEEKS_IN_YEAR
@@ -14,7 +17,7 @@ class DayView(QFrame):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setFrameStyle(QFrame.Shape.Panel | QFrame.Shadow.Plain)
+        self.setFrameStyle(QFrame.Panel | QFrame.Plain)
         self.setFixedSize(DayView.size)
 
     def sizeHint(self):
@@ -22,26 +25,26 @@ class DayView(QFrame):
 
 
 class WeekView(QFrame):
-    selected_week = pyqtSignal(int, name="selected")
+    selected_week = Signal(int, name="selected")
 
     def __init__(self, week_number: int, parent=None):
         super().__init__(parent)
         self.week_number = week_number
         self._selected = False
         
-        self.setFrameStyle(QFrame.Shape.StyledPanel | QFrame.Shadow.Plain)
+        self.setFrameStyle(QFrame.StyledPanel | QFrame.Plain)
         self.setLineWidth(2)
 
         self.setAutoFillBackground(True)
 
         palette = QPalette(self.palette())
-        palette.setColor(QPalette.ColorRole.Window, QColor(255, 255, 255))
+        palette.setColor(QPalette.Window, QColor(255, 255, 255))
         self.setPalette(palette)
         
         self.week_number_label = QLabel(str(self.week_number))
         self.week_number_label.setFixedWidth(32)
         self.week_number_label.setAlignment(
-            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+            Qt.AlignLeft | Qt.AlignVCenter
         )
         change_font(self.week_number_label, 2, True)
 
@@ -51,11 +54,11 @@ class WeekView(QFrame):
         layout.addWidget(
             self.week_number_label,
             0,
-            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
+            Qt.AlignLeft | Qt.AlignVCenter,
         )
         for day in self.days:
             layout.addWidget(
-                day, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+                day, 0, Qt.AlignLeft | Qt.AlignVCenter
             )
         layout.addSpacerItem(QSpacerItem(8, 8))
         self.update_frame()
@@ -78,10 +81,10 @@ class WeekView(QFrame):
 
     def update_frame(self):
         if self._selected:
-            frame_style = QFrame.Shape.Panel | QFrame.Shadow.Plain
+            frame_style = QFrame.Panel | QFrame.Plain
 
         else:
-            frame_style = QFrame.Shape.StyledPanel | QFrame.Shadow.Plain
+            frame_style = QFrame.StyledPanel | QFrame.Plain
 
         self.setFrameStyle(frame_style)
 
@@ -102,7 +105,7 @@ class SeasonView(QWidget):
         layout = QVBoxLayout(self)
         for week in self._weeks:
             layout.addWidget(
-                week, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+                week, 0, Qt.AlignLeft | Qt.AlignVCenter
             )
             week.selected_week.connect(self.on_selected_week)
 
@@ -131,7 +134,7 @@ class SeasonWeekScroll(QScrollArea):
         self._season_view = SeasonView()
         self.setWidget(self._season_view)
 
-        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Expanding)
+        self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
 
     def set_current_week(self, week: int):
         self._season_view.set_current_week(week)

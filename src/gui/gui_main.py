@@ -2,10 +2,10 @@ from enum import Enum, unique, auto
 from sys import argv
 from traceback import format_exc
 
-from PyQt6.QtCore import *
-from PyQt6.QtGui import *
-from PyQt6.QtWidgets import *
-
+from PySide6.QtCore import Qt
+from PySide6.QtCore import *
+from PySide6.QtGui import *
+from PySide6.QtWidgets import *
 
 from .mainmenuview import MainMenuView
 from .game_views import GameView
