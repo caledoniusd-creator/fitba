@@ -188,7 +188,7 @@ class GameClubView(GameTabBase):
         self._club_list.set_clubs(clubs)
         
         self._club_info.world_worker = self._world_engine.world_worker
-        
+
         item = self._club_list.currentItem()
         self._club_info.set_club(item.data(Qt.ItemDataRole.UserRole) if item else None)
 
@@ -237,6 +237,7 @@ class GameHomeWidget(GameTabBase):
     def _get_messages(self):
         messages = []
         if self._world_engine:
+            messages.append(f"# people: {self._world_engine.world.person_pool.count}")
             current_season = self._world_engine.world.current_season
             if current_season:
                  messages.append(f"{current_season.fixture_schedule.fixture_count} remaining Fixtures, {current_season.fixture_schedule.result_count} completed Results")

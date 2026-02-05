@@ -11,6 +11,7 @@ from .competition import CompetitionType, Competition, League, Cup
 from .leagues import league_30_fixtures, create_league_fixtures
 from .fixture import Fixture, Result
 from .league_table import LeagueTableWorker
+from .people import PersonFactory
 from .world import World
 
 
@@ -40,6 +41,9 @@ def create_test_world() -> World:
     cup = Cup("League Cup", "LC", ranking=100)
     cup.clubs = all_clubs[:32]
     world.competitions.append(cup)
+
+    people = [PersonFactory.random_male() for _ in range(1000)]
+    world.person_pool.add_people(people)
 
     return world
 

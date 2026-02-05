@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 import names
 from random import gauss
+from typing import List
 
 
 @dataclass
@@ -79,6 +80,9 @@ class PersonPool:
 
     def add_person(self, person: Person):
         self.people.add(person)
+
+    def add_people(self, new_people: List[Person]):
+        self.people.update(new_people)
 
     def remove_person(self, person: Person):
         self.people.discard(person)
