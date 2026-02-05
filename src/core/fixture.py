@@ -24,6 +24,9 @@ class Fixture:
     def __str__(self):
         return f"{self.competition_text().ljust(12)} {self.club1.name.rjust(CLUB_NAME_SIZE)} vs {self.club2.name.ljust(CLUB_NAME_SIZE)}"
 
+    def involves(self, club: Club):
+        return club in [self.club1, self.club2]
+
 
 @dataclass(frozen=True)
 class Result(Fixture):

@@ -6,7 +6,7 @@ from typing import Optional, List
 
 from .world_time import WEEKS_IN_YEAR, WorldTime
 from .calendars import Season
-from .club import ClubPool, ClubFactory
+from .club import Club, ClubPool, ClubFactory
 from .competition import CompetitionType, Competition, League, Cup
 from .leagues import league_30_fixtures, create_league_fixtures
 from .fixture import Fixture, Result
@@ -176,6 +176,29 @@ class WorldWorker:
                 return next_week, fixtures
         return None
     
+    def get_club_season_info(self, club: Club):
+        data = {
+            "competitions": [],
+            "fixtures": [],
+            "results": [],
+        }
+
+        if not self.world.current_season:
+            return data
+
+        current_season = self.world.current_season
+        for comp in self.world.competitions:
+            if comp.contains(club):
+                data["competitions"].append(comp)
+
+        for fixture in current_season.fixture_schedule.get_fixtures(with_week=True):
+            if fixture[1].involves(club):
+                data["fixtures"].append(fixture)
+
+        for result in current_season.fixture_schedule.get_results(with_week=True):
+            if result[1].involves(club):
+                data["results"].append(result)
+        return data
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #   Main State Engine 

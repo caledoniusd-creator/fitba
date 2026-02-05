@@ -187,6 +187,8 @@ class GameClubView(GameTabBase):
         clubs = self._world_engine.world.club_pool.get_all_clubs() if self._world_engine else []
         self._club_list.set_clubs(clubs)
         
+        self._club_info.world_worker = self._world_engine.world_worker
+        
         item = self._club_list.currentItem()
         self._club_info.set_club(item.data(Qt.ItemDataRole.UserRole) if item else None)
 

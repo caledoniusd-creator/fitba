@@ -1,6 +1,9 @@
 from enum import Enum, auto, unique
 
 
+from .club import Club
+
+
 @unique
 class CompetitionType(Enum):
     FRIENDLY = auto()
@@ -25,6 +28,9 @@ class Competition:
     @property
     def club_count(self):
         return len(self.clubs)
+    
+    def contains(self, club: Club):
+        return club in self.clubs
 
 
 class Friendly(Competition):
