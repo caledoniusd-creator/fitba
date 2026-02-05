@@ -20,11 +20,14 @@ from .generic_widgets import WidgetList
 class WorldTimeLabel(QLabel):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
-        change_font(self, 4, True)
+        change_font(self, 8, True)
+        # self.setFrameStyle(QFrame.StyledPanel | QFrame.Plain)
+        # self.setAutoFillBackground(True)
+        # self.setContentsMargins(QMargins(16, 8, 16, 8))
 
     def set_time(self, time: WorldTime | None):
         if time is not None:
-            text = f"{time} ".replace("Year", "Season")
+            text = f"Season {time.year} Week {time.week}"
         else:
             text = "N/A"
         self.setText(text)

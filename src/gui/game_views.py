@@ -12,7 +12,7 @@ from core.league_table import LeagueTableWorker
 from core.workers import WorldState, WorldStateEngine
 
 
-from .utils import change_font
+from .utils import change_font, set_dark_bg
 from .generic_widgets import PagesWidget, NextContinueStackedWidget
 from .view_widgets import (
     WorldTimeLabel,
@@ -28,7 +28,10 @@ from .viewbase import ViewBase
 
 
 class GameViewTopBar(QFrame):
+
     game_continue = Signal(name="game continue")
+    run_to_post_season = Signal(name="run to post season")
+    advance_new_week = Signal(name="advance new week")
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -38,9 +41,31 @@ class GameViewTopBar(QFrame):
         self.world_time_lbl = WorldTimeLabel()
         self.state_lbl = QLabel()
 
-        continue_btn = QPushButton("Continue")
+        continue_btn = QPushButton("\u21a6")
+        continue_btn.setToolTip("Continue")
         continue_btn.clicked.connect(self.game_continue)
-        change_font(continue_btn, 2, True)
+
+        new_week_btn = QPushButton("\u21d2")
+        new_week_btn.setToolTip("To new week")
+        new_week_btn.clicked.connect(self.advance_new_week)
+
+        end_season_btn = QPushButton("\u21db")
+        end_season_btn.setToolTip("To end of Season")
+        end_season_btn.clicked.connect(self.run_to_post_season)
+
+        btn_frame = QFrame()
+        btn_frame.setFrameStyle(QFrame.StyledPanel | QFrame.Plain)
+        btn_frame.setAutoFillBackground(True)
+        set_dark_bg(btn_frame)
+        btn_layout = QHBoxLayout(btn_frame)
+        btn_layout.setContentsMargins(QMargins(4, 4, 4, 4))
+        btn_layout.setSpacing(4)
+        btn_layout.addStretch(100)
+
+        for btn in [end_season_btn, new_week_btn, continue_btn]:
+            change_font(btn, 16, True)
+            btn.setFixedSize(64, 24)
+            btn_layout.addWidget(btn, 0, Qt.AlignRight | Qt.AlignVCenter)
 
         layout = QHBoxLayout(self)
         layout.addWidget(
@@ -55,7 +80,7 @@ class GameViewTopBar(QFrame):
             Qt.AlignRight | Qt.AlignVCenter,
         )
         layout.addWidget(
-            continue_btn, 0, Qt.AlignRight | Qt.AlignVCenter
+            btn_frame, 0, Qt.AlignRight | Qt.AlignVCenter
         )
 
     def invalidate(self, world_engine: WorldStateEngine):
@@ -174,12 +199,16 @@ class GameClubView(GameTabBase):
 
 class GameHomeWidget(GameTabBase):
     game_continue = Signal(name="game continue")
+    run_to_post_season = Signal(name="run to post season")
+    advance_new_week = Signal(name="advance new week")
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
 
         self.top_bar = GameViewTopBar()
         self.top_bar.game_continue.connect(self.game_continue)
+        self.top_bar.run_to_post_season.connect(self.run_to_post_season)
+        self.top_bar.advance_new_week.connect(self.advance_new_week)
 
         self.world_time_lbl = WorldTimeLabel()
 
@@ -227,14 +256,12 @@ class GameHomeWidget(GameTabBase):
 
 
 class GameViewTabs(QTabWidget):
-    game_continue = Signal(name="game continue")
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         self._world_engine: WorldStateEngine | None = None
 
         self._home_widget = GameHomeWidget()
-        self._home_widget.game_continue.connect(self.game_continue)
         self.addTab(self._home_widget, "Home")
 
         self._club_view_widget = GameClubView()
@@ -254,6 +281,10 @@ class GameViewTabs(QTabWidget):
     @property
     def world_engine(self):
         return self._world_engine
+    
+    @property
+    def home_widget(self):
+        return self._home_widget
 
     @world_engine.setter
     def world_engine(self, new_world_engine: WorldStateEngine | None):
@@ -296,7 +327,7 @@ class GameView(ViewBase):
         self.view_stack = QStackedWidget()
 
         self.game_tabs = GameViewTabs()
-        self.game_tabs.game_continue.connect(self.game_continue)
+        self.game_tabs.home_widget.game_continue.connect(self.game_continue)
 
         self.game_alt_stack = NextContinueStackedWidget()
         self.game_alt_stack.continue_pressed.connect(self.game_continue)
@@ -311,6 +342,8 @@ class GameView(ViewBase):
 
         self.world_changed.connect(self.on_world_changed)
         self.game_continue.connect(self.on_game_continue)
+        self.game_tabs.home_widget.run_to_post_season.connect(self.on_run_to_post_season)
+        self.game_tabs.home_widget.advance_new_week.connect(self.on_advance_new_week)
 
     @property
     def world_engine(self):
@@ -390,8 +423,29 @@ class GameView(ViewBase):
         self.world_engine.advance_game()
         self.invalidate()
 
+    def _processing_update(self, message: str, funct: callable):
+        widget = MajorGameView(message)
+        current_index = self.view_stack.currentIndex()
+        self.view_stack.addWidget(widget)
+        self.view_stack.setCurrentWidget(widget)
+        self.setEnabled(False)
+        QGuiApplication.processEvents()
+
+        funct()
+
+        self.view_stack.removeWidget(widget)
+        self.view_stack.setCurrentIndex(current_index)
+        self.setEnabled(True)
+        self.invalidate()
+
+    def on_run_to_post_season(self):
+        self._processing_update("Run to end of season!", self.world_engine.advance_to_post_season)
+
+    def on_advance_new_week(self):
+        self._processing_update("Run to new week!", self.world_engine.advance_to_new_week)
+
     def keyReleaseEvent(self, event):
-        if event.key() == Qt.Key.Key_F12:
+        if event.key() == Qt.Key_F1:
             event.setAccepted(True)
             self.main_menu.emit()
         else:

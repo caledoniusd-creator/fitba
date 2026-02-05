@@ -20,3 +20,13 @@ def vline():
     frame = QFrame()
     frame.setFrameStyle(QFrame.VLine | QFrame.Plain)
     return frame
+
+def set_dark_bg(widget):
+    palette = QPalette(widget.palette())
+    palette.setColor(QPalette.ColorRole.Window, QColor(224, 224, 224))
+    widget.setPalette(palette)
+
+def set_white_bg(widget):
+    palette = QPalette(widget.palette())
+    palette.setColor(QPalette.ColorRole.Window, QColor(255, 255, 255))
+    widget.setPalette(palette)

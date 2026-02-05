@@ -104,15 +104,18 @@ class PagesWidget(QWidget):
         self._stack = QStackedWidget()
 
         btn_back = QToolButton()
-        btn_back.setText("\u2b05")
+        btn_back.setText("\u21d0")
+        btn_back.setToolTip("Previous")
         btn_back.clicked.connect(self.on_back)
 
         btn_next = QToolButton()
-        btn_next.setText("\u27a1")
+        btn_next.setText("\u21d2")
+        btn_back.setToolTip("Next")
         btn_next.clicked.connect(self.on_next)
 
         for btn in [btn_back, btn_next]:
             change_font(btn, 8, True)
+            btn.setFixedWidth(48)
 
         btn_layout = QHBoxLayout()
         btn_layout.addStretch(100)
@@ -167,19 +170,40 @@ class PagesDialog(QDialog):
 
 
 class NextContinueStackedWidget(QWidget):
+    """
+    A QWidget that manages a stacked widget with Next and Continue buttons.
+    This widget provides a multi-page interface where users can navigate through
+    pages sequentially using a "Next" button, and proceed with a "Continue" button
+    when reaching the final page.
+    Attributes:
+        continue_pressed (Signal): Emitted when the Continue button is clicked.
+        next_btn (QPushButton): Button to navigate to the next page.
+        continue_btn (QPushButton): Button to confirm and continue after viewing all pages.
+    Methods:
+        set_pages(new_pages): Set the pages to display in the stacked widget.
+        update_btns(): Update the visibility of Next and Continue buttons based on current page.
+        on_next(): Handle the Next button click and navigate to the next page.
+    """
+
     continue_pressed = Signal(name="continue_pressed")
 
     def __init__(self, parent=None):
         super().__init__(parent)
 
         self._stack_widget = QStackedWidget()
-        self.next_btn = QPushButton("Next")
+        self.next_btn = QPushButton("\u21d2")
+        self.next_btn.setToolTip("Next")
+        self.next_btn.setShortcut(QKeySequence(Qt.Key.Key_Space))
         self.next_btn.clicked.connect(self.on_next)
-        self.continue_btn = QPushButton("Continue")
+        
+        self.continue_btn = QPushButton("\u21a6")
+        self.continue_btn.setToolTip("Continue")
+        # self.next_btn.setShortcut(Qt.Key.Key_Return)
         self.continue_btn.clicked.connect(self.continue_pressed)
 
         for btn in [self.next_btn, self.continue_btn]:
-            change_font(btn, 2, True)
+            change_font(btn, 12, True)
+            btn.setFixedWidth(48)
 
         btn_layout = QHBoxLayout()
         btn_layout.addStretch(100)
@@ -220,10 +244,17 @@ class NextContinueStackedWidget(QWidget):
             cur_ix = self._stack_widget.currentIndex()
             if cur_ix < num_pages - 1:
                 self.next_btn.setVisible(True)
+                self.next_btn.setEnabled(True)
                 self.continue_btn.setVisible(False)
+                self.continue_btn.setEnabled(False)
+                self.continue_btn.blockSignals(True)
             else:
                 self.next_btn.setVisible(False)
+                self.next_btn.setEnabled(False)
                 self.continue_btn.setVisible(True)
+                self.continue_btn.setEnabled(True)
+                self.continue_btn.blockSignals(False)
+                
         else:
             self.next_btn.setVisible(False)
             self.continue_btn.setVisible(True)
@@ -235,3 +266,16 @@ class NextContinueStackedWidget(QWidget):
         if next_ix < num_pages:
             self._stack_widget.setCurrentIndex(next_ix)
         self.update_btns()
+
+    # def keyReleasedEvent(self, event):
+    #     if event.key() == Qt.Key.Key_F12:
+    #         if self.next_btn.isVisible():
+    #             print("Next !!!")
+    #             self.next_btn.clicked.emit()
+    #         else:
+    #             self.continue_btn.clicked.emit()
+    #             print("continue !!!")
+    #             pass
+    #         event.accept()
+    #     else:
+    #         super().keyPressEvent(event)

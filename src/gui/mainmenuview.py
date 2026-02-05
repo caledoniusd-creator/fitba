@@ -5,7 +5,7 @@ from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
 
-from .utils import change_font, hline
+from .utils import change_font, hline, set_dark_bg
 
 
 from .viewbase import ViewBase
@@ -38,15 +38,22 @@ class MainMenuView(ViewBase):
             change_font(btn, 8, True)
             btn.setFixedWidth(256)
 
-        button_layout = QVBoxLayout()
-        button_layout.addStretch(25)
+        btn_frame = QFrame()
+        btn_frame.setAutoFillBackground(True)
+        btn_frame.setFrameStyle(QFrame.StyledPanel | QFrame.Plain)
+        set_dark_bg(btn_frame)
+
+        button_layout = QVBoxLayout(btn_frame)
+        button_layout.setContentsMargins(QMargins(16, 16, 16, 16))
+        button_layout.setSpacing(8)
         button_layout.addWidget(new_game_btn, 0, Qt.AlignHCenter | Qt.AlignTop)
         button_layout.addWidget(load_game_btn, 0, Qt.AlignHCenter | Qt.AlignTop)
         button_layout.addWidget(quit_game_btn, 0, Qt.AlignHCenter | Qt.AlignTop)
-        button_layout.addStretch(50)
 
         layout = QVBoxLayout(self)
 
-        layout.addWidget(title)
+        layout.addWidget(title, 0, Qt.AlignHCenter | Qt.AlignTop)
         layout.addWidget(hline())
-        layout.addLayout(button_layout)
+        layout.addStretch(25)
+        layout.addWidget(btn_frame, 0, Qt.AlignHCenter | Qt.AlignTop)
+        layout.addStretch(50)

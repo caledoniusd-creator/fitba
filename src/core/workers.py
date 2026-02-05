@@ -281,4 +281,21 @@ class WorldStateEngine:
     def advance_game(self):
         self._process_state()
 
+    def advance_to_post_season(self):
+        current_week = self.world_time.week
+        print(f"Advancing to PostSeason current week: {current_week}")
+        while self.state != WorldState.PostSeason:
+            self.advance_game()
+            if current_week != self.world_time.week:
+                current_week = self.world_time.week
+                print(f"New week: {current_week}")
+        print("Post Season!")
 
+    def advance_to_new_week(self):
+        if self.state in [WorldState.PostSeason, WorldState.NewSeason]:
+            print(f"Invalid state '{self.state.name}' to advance to new week")
+            return
+        current_week = self.world_time.week
+        print(f"Advancing to new week current week: {current_week}")
+        while self.state != WorldState.PostSeason and current_week == self.world_time.week:
+            self.advance_game()

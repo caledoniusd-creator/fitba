@@ -9,7 +9,7 @@ from PySide6.QtWidgets import *
 from core.world_time import DAYS_IN_WEEK, WEEKS_IN_YEAR
 
 
-from .utils import change_font
+from .utils import change_font, set_dark_bg, set_white_bg
 
 
 class DayView(QFrame):
@@ -36,10 +36,7 @@ class WeekView(QFrame):
         self.setLineWidth(2)
 
         self.setAutoFillBackground(True)
-
-        palette = QPalette(self.palette())
-        palette.setColor(QPalette.Window, QColor(255, 255, 255))
-        self.setPalette(palette)
+        set_white_bg(self)
         
         self.week_number_label = QLabel(str(self.week_number))
         self.week_number_label.setFixedWidth(32)
@@ -62,6 +59,8 @@ class WeekView(QFrame):
             )
         layout.addSpacerItem(QSpacerItem(8, 8))
         self.update_frame()
+
+        self.setToolTip(f"Week {self.week_number}")
 
     @property
     def selected(self):
@@ -94,20 +93,18 @@ class SeasonView(QWidget):
         super().__init__(parent)
 
         self.setAutoFillBackground(True)
-
-        palette = QPalette(self.palette())
-        palette.setColor(QPalette.ColorRole.Window, QColor(224, 224, 224))
-        self.setPalette(palette)
+        set_dark_bg(self)
 
         self._weeks = [WeekView(i + 1) for i in range(WEEKS_IN_YEAR)]
-        self._weeks[0].selected = True
-
+        
         layout = QVBoxLayout(self)
         for week in self._weeks:
             layout.addWidget(
                 week, 0, Qt.AlignLeft | Qt.AlignVCenter
             )
             week.selected_week.connect(self.on_selected_week)
+
+        self._weeks[0].selected = True
 
     def on_selected_week(self, week_number):
         for week in self._weeks:
@@ -119,6 +116,8 @@ class SeasonView(QWidget):
             raise ValueError("invalid week")
         ix = week - 1
         self._weeks[ix].selected = True
+        for widget in self._weeks:
+            widget.setEnabled(False if week > widget.week_number else True)
 
     def week_widget(self):
         for w in self._weeks:
