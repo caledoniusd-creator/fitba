@@ -8,12 +8,13 @@ from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
-from .mainmenuview import MainMenuView
-from .game_views import GameView
 
+from src.__version__ import __version__
 from src.core.world import World
 from src.core.workers import create_test_world, WorldStateEngine
 
+from .mainmenuview import MainMenuView
+from .game_views import GameView
 
 from .utils import change_font, set_white_bg
 
@@ -114,7 +115,7 @@ class AppMainWindow(QStackedWidget):
     def __init__(self, window_size: QSize = QSize(1920, 1024), parent=None):
         super().__init__(parent=parent)
         self.setFixedSize(window_size)
-        self.setWindowTitle("Fitba")
+        self.setWindowTitle(f"Fitba - {__version__}")
 
         self._main_menu = MainMenuView()
         self._main_menu.new_game.connect(self._on_new_game)
