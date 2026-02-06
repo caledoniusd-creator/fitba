@@ -355,7 +355,6 @@ class GameView(ViewBase):
     @world_engine.setter
     def world_engine(self, new_world_engine: WorldStateEngine | None):
         if new_world_engine != self._world_engine:
-            print("New World")
             self._world_engine = new_world_engine
             self.world_changed.emit()
 

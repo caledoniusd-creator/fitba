@@ -34,9 +34,11 @@ class MainMenuView(ViewBase):
         quit_game_btn = QPushButton("Quit")
         quit_game_btn.clicked.connect(self.quit_game)
 
+        btn_font = QFont("DejaVu Sans", 16, QFont.Bold)
         for btn in [new_game_btn, load_game_btn, quit_game_btn]:
-            change_font(btn, 8, True)
-            btn.setFixedWidth(256)
+            # change_font(btn, 8, True)
+            btn.setFont(btn_font)
+            btn.setFixedSize(QSize(320, 48))
 
         btn_frame = QFrame()
         btn_frame.setAutoFillBackground(True)
@@ -44,14 +46,14 @@ class MainMenuView(ViewBase):
         set_dark_bg(btn_frame)
 
         button_layout = QVBoxLayout(btn_frame)
-        button_layout.setContentsMargins(QMargins(16, 16, 16, 16))
+        button_layout.setContentsMargins(QMargins(64, 64, 64, 64))
         button_layout.setSpacing(8)
         button_layout.addWidget(new_game_btn, 0, Qt.AlignHCenter | Qt.AlignTop)
         button_layout.addWidget(load_game_btn, 0, Qt.AlignHCenter | Qt.AlignTop)
         button_layout.addWidget(quit_game_btn, 0, Qt.AlignHCenter | Qt.AlignTop)
 
         layout = QVBoxLayout(self)
-
+        layout.setContentsMargins(QMargins(32, 32, 32, 32))
         layout.addWidget(title, 0, Qt.AlignHCenter | Qt.AlignTop)
         layout.addWidget(hline())
         layout.addStretch(25)

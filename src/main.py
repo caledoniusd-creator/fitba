@@ -1,5 +1,6 @@
 from argparse import ArgumentParser
 from cli.cli_game import cli_app_main
+
 from gui.gui_main import run_gui_application
 
 

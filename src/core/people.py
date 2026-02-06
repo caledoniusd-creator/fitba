@@ -76,40 +76,42 @@ class PersonFactory:
 
 class PersonPool:
     def __init__(self):
-        self.people = set()
+        self._people = set()
 
     def add_person(self, person: Person):
-        self.people.add(person)
+        self._people.add(person)
 
     def add_people(self, new_people: List[Person]):
-        self.people.update(new_people)
+        self._people.update(new_people)
 
     def remove_person(self, person: Person):
-        self.people.discard(person)
+        self._people.discard(person)
 
     def get_all_people(self):
-        return list(self.people)
+        return list(self._people)
 
     @property
     def count(self):
-        return len(self.people)
+        return len(self._people)
+
+    def clear(self):
+        self._people.clear()
+
+# def persons_main():
+#     count = 10
+#     people = [PersonFactory.random_male() for _ in range(count)]
+#     staff = [PersonFactory.random_staff() for _ in range(count)]
+#     players = [PersonFactory.random_player() for _ in range(count)]
+
+#     cols = [[], [], []]
+
+#     for person, employee, players in zip(people, staff, players):
+#         cols[0].append(str(person).ljust(30))
+#         cols[1].append(str(employee).ljust(30))
+#         cols[2].append(str(players).ljust(30))
+#     for c1, c2, c3 in zip(cols[0], cols[1], cols[2]):
+#         print(f"{c1} | {c2} | {c3}")
 
 
-def persons_main():
-    count = 10
-    people = [PersonFactory.random_male() for _ in range(count)]
-    staff = [PersonFactory.random_staff() for _ in range(count)]
-    players = [PersonFactory.random_player() for _ in range(count)]
-
-    cols = [[], [], []]
-
-    for person, employee, players in zip(people, staff, players):
-        cols[0].append(str(person).ljust(30))
-        cols[1].append(str(employee).ljust(30))
-        cols[2].append(str(players).ljust(30))
-    for c1, c2, c3 in zip(cols[0], cols[1], cols[2]):
-        print(f"{c1} | {c2} | {c3}")
-
-
-if __name__ == "__main__":
-    persons_main()
+# if __name__ == "__main__":
+#     persons_main()
