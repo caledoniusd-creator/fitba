@@ -34,7 +34,7 @@ class MainMenuView(ViewBase):
         quit_game_btn = QPushButton("Quit")
         quit_game_btn.clicked.connect(self.quit_game)
 
-        btn_font = QFont("DejaVu Sans", 16, QFont.Bold)
+        btn_font = QFont("DejaVu Sans", 20, QFont.Bold)
         for btn in [new_game_btn, load_game_btn, quit_game_btn]:
             # change_font(btn, 8, True)
             btn.setFont(btn_font)

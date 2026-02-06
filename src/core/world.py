@@ -8,6 +8,7 @@ from .calendars import Season
 from .club import ClubPool
 from .competition import Competition
 from .people import PersonPool
+from .staff import StaffPool
 
 
 
@@ -23,12 +24,14 @@ class World:
     competitions: Optional[List[Competition]] = None
 
     person_pool: Optional[PersonPool] = None
+    staff_pool: Optional[StaffPool] = None
 
     def __post_init__(self):
         self.previous_seasons = self.previous_seasons or []
         self.club_pool = self.club_pool or ClubPool()
         self.competitions = self.competitions or []
         self.person_pool = self.person_pool or PersonPool()
+        self.staff_pool = self.staff_pool or StaffPool()
         
         rand_seed(self.world_seed)
 

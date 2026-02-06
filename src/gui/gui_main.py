@@ -30,11 +30,6 @@ class BusyPage(QWidget):
         self.setAutoFillBackground(True)
 
         set_white_bg(self)
-
-        families = QFontDatabase.families()
-        text = ", ".join(families)
-        print(f"Fonts: {text}")
-    
         self._update_timer = 0
 
         self._busy = QProgressBar()
@@ -72,6 +67,7 @@ class BusyPage(QWidget):
 
     def hideEvent(self, event):
         self.stop_timer()
+        print((f"Busy for {self.delta_time():.2f} seconds"))
         super().hideEvent(event)
     
     def start_timer(self):
@@ -153,14 +149,11 @@ class AppMainWindow(QStackedWidget):
         thread.start()
 
     def _on_new_game_ready(self):
-        print("Thread Finished")
         new_game_thread = self.sender()
         if new_game_thread and new_game_thread.world:
-            print("New World")
             self._game_menu.world_engine = WorldStateEngine(new_game_thread.world)
             self.setCurrentWidget(self._game_menu)
 
-            
     def on_load_game(self):
         pass
 
@@ -174,6 +167,7 @@ class GUIApplication(QApplication):
         self.widget = None
 
     def run(self):
+        print(f"Fonts: {', '.join(QFontDatabase.families())}")
         print("Styles: " + ", ".join(QStyleFactory.keys()))
         # QApplication.setStyle(QStyleFactory.create("Windows"))
         QApplication.setStyle(QStyleFactory.create("Fusion"))

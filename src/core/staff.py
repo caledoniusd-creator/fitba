@@ -42,6 +42,8 @@ class StaffMember:
     def __str__(self):
         return f"{self.person.name.short_name} {str(self.role)} {self.reputation} ({self.rating})"
     
+    def __hash__(self):
+        return hash(str(self))
 
 class StaffMemberFactory:
 
@@ -68,3 +70,9 @@ class StaffPool:
 
     def add_staff_people(self, staff_people: List[StaffMember]):
         self._staff.update(staff_people)
+
+    def clear(self):
+        self._staff.clear()
+
+    def remove_staff_person(self, staff_person: StaffMember):
+        self._staff.discard(staff_person)

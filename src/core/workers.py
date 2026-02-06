@@ -12,6 +12,7 @@ from .leagues import league_30_fixtures, create_league_fixtures
 from .fixture import Fixture, Result
 from .league_table import LeagueTableWorker
 from .people import PersonFactory
+from .staff import StaffRole, StaffMemberFactory
 from .world import World
 
 
@@ -42,9 +43,47 @@ def create_test_world() -> World:
     cup.clubs = all_clubs[:32]
     world.competitions.append(cup)
 
-    people = [PersonFactory.random_male() for _ in range(1000)]
-    world.person_pool.add_people(people)
+    # people = [PersonFactory.random_male() for _ in range(1000)]
+    # world.person_pool.add_people(people)
 
+    # Managers
+    
+    manager_count = 100
+    print(f"Adding Managers x {manager_count}")
+    staff_people = [PersonFactory.random_staff() for _ in range(manager_count)]
+    world.person_pool.add_people(staff_people)
+
+    staff_members =[StaffMemberFactory.random_staff_member(p, StaffRole.Manager) for p in staff_people]
+    world.staff_pool.add_staff_people(staff_members)
+
+    # Coaches
+    coach_count = 250
+    print(f"Adding Coaches x {coach_count}")
+    staff_people = [PersonFactory.random_staff() for _ in range(coach_count)]
+    world.person_pool.add_people(staff_people)
+
+    staff_members =[StaffMemberFactory.random_staff_member(p, StaffRole.Coach) for p in staff_people]
+    world.staff_pool.add_staff_people(staff_members)
+
+    # Scouts
+    scout_count = 250
+    print(f"Adding Scouts x {scout_count}")
+    staff_people = [PersonFactory.random_staff() for _ in range(scout_count)]
+    world.person_pool.add_people(staff_people)
+
+    staff_members =[StaffMemberFactory.random_staff_member(p, StaffRole.Scout) for p in staff_people]
+    world.staff_pool.add_staff_people(staff_members)
+
+    # Physios
+    physio_count = 100
+    print(f"Adding Physios x {physio_count}")
+    staff_people = [PersonFactory.random_staff() for _ in range(physio_count)]
+    world.person_pool.add_people(staff_people)
+
+    staff_members =[StaffMemberFactory.random_staff_member(p, StaffRole.Physio) for p in staff_people]
+    world.staff_pool.add_staff_people(staff_members)
+
+    print(f"Number of People = {world.person_pool.count}")
     return world
 
 

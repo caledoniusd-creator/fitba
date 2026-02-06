@@ -417,7 +417,7 @@ class GameView(ViewBase):
         self.game_tabs.invalidate()
 
     def on_world_changed(self):
-        print(f"World changed: {self._world_engine.world}")
+        print(f"World changed: {hex(self._world_engine.world.world_seed)}")
         self.game_tabs.world_engine = self._world_engine
         self.invalidate()
 
