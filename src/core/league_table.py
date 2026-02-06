@@ -75,7 +75,7 @@ class LeagueTableWorker:
                 -entry.points,
                 -entry.goal_diff,
                 -entry.goals_for,
-                entry.club.name
+                entry.club.name,
             ),
             reverse=False,
         )

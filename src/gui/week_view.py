@@ -1,9 +1,7 @@
-
 from PySide6.QtCore import Qt
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
-
 
 
 from core.world_time import DAYS_IN_WEEK, WEEKS_IN_YEAR
@@ -31,18 +29,16 @@ class WeekView(QFrame):
         super().__init__(parent)
         self.week_number = week_number
         self._selected = False
-        
+
         self.setFrameStyle(QFrame.StyledPanel | QFrame.Plain)
         self.setLineWidth(2)
 
         self.setAutoFillBackground(True)
         set_white_bg(self)
-        
+
         self.week_number_label = QLabel(str(self.week_number))
         self.week_number_label.setFixedWidth(32)
-        self.week_number_label.setAlignment(
-            Qt.AlignLeft | Qt.AlignVCenter
-        )
+        self.week_number_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         change_font(self.week_number_label, 2, True)
 
         self.days = [DayView() for _ in range(DAYS_IN_WEEK)]
@@ -54,9 +50,7 @@ class WeekView(QFrame):
             Qt.AlignLeft | Qt.AlignVCenter,
         )
         for day in self.days:
-            layout.addWidget(
-                day, 0, Qt.AlignLeft | Qt.AlignVCenter
-            )
+            layout.addWidget(day, 0, Qt.AlignLeft | Qt.AlignVCenter)
         layout.addSpacerItem(QSpacerItem(8, 8))
         self.update_frame()
 
@@ -96,12 +90,10 @@ class SeasonView(QWidget):
         set_dark_bg(self)
 
         self._weeks = [WeekView(i + 1) for i in range(WEEKS_IN_YEAR)]
-        
+
         layout = QVBoxLayout(self)
         for week in self._weeks:
-            layout.addWidget(
-                week, 0, Qt.AlignLeft | Qt.AlignVCenter
-            )
+            layout.addWidget(week, 0, Qt.AlignLeft | Qt.AlignVCenter)
             week.selected_week.connect(self.on_selected_week)
 
         self._weeks[0].selected = True

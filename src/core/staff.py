@@ -1,4 +1,3 @@
-
 from dataclasses import dataclass
 from enum import Enum, unique
 from random import randint
@@ -14,7 +13,10 @@ MAX_RATING = 100
 
 def random_rating(margin: float = 0.1):
     margin_value = MAX_RATING * margin
-    min_value, max_value = int(round(margin_value)), int(round(MAX_RATING - margin_value))
+    min_value, max_value = (
+        int(round(margin_value)),
+        int(round(MAX_RATING - margin_value)),
+    )
     return randint(min_value, max_value)
 
 
@@ -25,7 +27,6 @@ class StaffRole(Enum):
     Coach = 2
     Scout = 3
     Physio = 4
-
 
 
 @dataclass
@@ -41,30 +42,28 @@ class StaffMember:
 
     def __str__(self):
         return f"{self.person.name.short_name} {str(self.role)} {self.reputation} ({self.rating})"
-    
+
     def __hash__(self):
         return hash(str(self))
 
-class StaffMemberFactory:
 
+class StaffMemberFactory:
     @staticmethod
     def random_staff_member(person: Person, role: StaffRole):
         return StaffMember(person, role, ReputationLevel.random(), random_rating())
-    
 
 
 class StaffPool:
-
     def __init__(self):
         self._staff = set()
 
     def get_all_staff(self):
         return list(self._staff)
-    
+
     @property
     def count(self):
         return len(self._staff)
-    
+
     def add_staff_person(self, staff_person: StaffMember):
         self._staff.add(staff_person)
 

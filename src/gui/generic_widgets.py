@@ -67,9 +67,7 @@ class WidgetList(QWidget):
         self.clear_widgets(False)
         for w in widgets:
             self._widgets.append(w)
-            self.widget_layout.addWidget(
-                w, 0, Qt.AlignHCenter | Qt.AlignTop
-            )
+            self.widget_layout.addWidget(w, 0, Qt.AlignHCenter | Qt.AlignTop)
 
         self.update_visibility()
 
@@ -95,7 +93,7 @@ class PagesWidget(QWidget):
             Replace the current pages with a new list of pages. Cleans up old pages
             and updates the stacked widget. Disables the widget if no pages are provided.
     """
-    
+
     def __init__(self, title: str, pages: List[QWidget] = list(), parent=None):
         super().__init__(parent=parent)
         self._title = title
@@ -128,9 +126,7 @@ class PagesWidget(QWidget):
         change_font(title_lbl, 4, True)
 
         layout = QVBoxLayout(self)
-        layout.addWidget(
-            title_lbl, 0, Qt.AlignHCenter | Qt.AlignTop
-        )
+        layout.addWidget(title_lbl, 0, Qt.AlignHCenter | Qt.AlignTop)
         layout.addWidget(self._stack, 100)
         layout.addLayout(btn_layout)
 
@@ -195,7 +191,7 @@ class NextContinueStackedWidget(QWidget):
         self.next_btn.setToolTip("Next")
         self.next_btn.setShortcut(QKeySequence(Qt.Key.Key_Space))
         self.next_btn.clicked.connect(self.on_next)
-        
+
         self.continue_btn = QPushButton("\u21a6")
         self.continue_btn.setToolTip("Continue")
         # self.next_btn.setShortcut(Qt.Key.Key_Return)
@@ -254,7 +250,7 @@ class NextContinueStackedWidget(QWidget):
                 self.continue_btn.setVisible(True)
                 self.continue_btn.setEnabled(True)
                 self.continue_btn.blockSignals(False)
-                
+
         else:
             self.next_btn.setVisible(False)
             self.continue_btn.setVisible(True)

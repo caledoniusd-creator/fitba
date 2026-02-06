@@ -1,12 +1,11 @@
-from dataclasses import dataclass
 from enum import Enum, unique, auto
-from random import choices, shuffle, randrange, seed as rand_seed
+from random import choices, shuffle, randrange
 
-from typing import Optional, List
+from typing import List
 
 from .world_time import WEEKS_IN_YEAR, WorldTime
 from .calendars import Season
-from .club import Club, ClubPool, ClubFactory
+from .club import Club, ClubFactory
 from .competition import CompetitionType, Competition, League, Cup
 from .leagues import league_30_fixtures, create_league_fixtures
 from .fixture import Fixture, Result
@@ -47,13 +46,16 @@ def create_test_world() -> World:
     # world.person_pool.add_people(people)
 
     # Managers
-    
+
     manager_count = 100
     print(f"Adding Managers x {manager_count}")
     staff_people = [PersonFactory.random_staff() for _ in range(manager_count)]
     world.person_pool.add_people(staff_people)
 
-    staff_members =[StaffMemberFactory.random_staff_member(p, StaffRole.Manager) for p in staff_people]
+    staff_members = [
+        StaffMemberFactory.random_staff_member(p, StaffRole.Manager)
+        for p in staff_people
+    ]
     world.staff_pool.add_staff_people(staff_members)
 
     # Coaches
@@ -62,7 +64,9 @@ def create_test_world() -> World:
     staff_people = [PersonFactory.random_staff() for _ in range(coach_count)]
     world.person_pool.add_people(staff_people)
 
-    staff_members =[StaffMemberFactory.random_staff_member(p, StaffRole.Coach) for p in staff_people]
+    staff_members = [
+        StaffMemberFactory.random_staff_member(p, StaffRole.Coach) for p in staff_people
+    ]
     world.staff_pool.add_staff_people(staff_members)
 
     # Scouts
@@ -71,7 +75,9 @@ def create_test_world() -> World:
     staff_people = [PersonFactory.random_staff() for _ in range(scout_count)]
     world.person_pool.add_people(staff_people)
 
-    staff_members =[StaffMemberFactory.random_staff_member(p, StaffRole.Scout) for p in staff_people]
+    staff_members = [
+        StaffMemberFactory.random_staff_member(p, StaffRole.Scout) for p in staff_people
+    ]
     world.staff_pool.add_staff_people(staff_members)
 
     # Physios
@@ -80,7 +86,10 @@ def create_test_world() -> World:
     staff_people = [PersonFactory.random_staff() for _ in range(physio_count)]
     world.person_pool.add_people(staff_people)
 
-    staff_members =[StaffMemberFactory.random_staff_member(p, StaffRole.Physio) for p in staff_people]
+    staff_members = [
+        StaffMemberFactory.random_staff_member(p, StaffRole.Physio)
+        for p in staff_people
+    ]
     world.staff_pool.add_staff_people(staff_members)
 
     print(f"Number of People = {world.person_pool.count}")
@@ -175,7 +184,9 @@ class WorldWorker:
     def get_current_fixtures(self):
         week_num = self.world.world_time.week
         if self.world.current_season:
-            return self.world.current_season.fixture_schedule.get_fixtures_for_week(week_num)
+            return self.world.current_season.fixture_schedule.get_fixtures_for_week(
+                week_num
+            )
         return []
 
     def process_fixtures(self, fixtures: List[Fixture], week: int):
@@ -203,8 +214,12 @@ class WorldWorker:
         all_results = []
         if self.world.current_season:
             fixture_schedule = self.world.current_season.fixture_schedule
-            all_results = [r for r in fixture_schedule.get_results() if r.competition == competition]
-        
+            all_results = [
+                r
+                for r in fixture_schedule.get_results()
+                if r.competition == competition
+            ]
+
         return all_results
 
     def get_next_fixtures(self):
@@ -218,7 +233,7 @@ class WorldWorker:
             if fixtures:
                 return next_week, fixtures
         return None
-    
+
     def get_club_season_info(self, club: Club):
         data = {
             "competitions": [],
@@ -243,8 +258,9 @@ class WorldWorker:
                 data["results"].append(result)
         return data
 
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#   Main State Engine 
+#   Main State Engine
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -299,7 +315,9 @@ class WorldStateEngine:
         self._state = new_state
 
     def _do_process_fixtures(self):
-        self._results = self.world_worker.process_fixtures(self._fixtures, self.world_time.week)
+        self._results = self.world_worker.process_fixtures(
+            self._fixtures, self.world_time.week
+        )
 
     def _process_state(self):
         if self.state == WorldState.NewSeason:
@@ -363,5 +381,7 @@ class WorldStateEngine:
             return
         current_week = self.world_time.week
         print(f"Advancing to new week current week: {current_week}")
-        while self.state != WorldState.PostSeason and current_week == self.world_time.week:
+        while (
+            self.state != WorldState.PostSeason and current_week == self.world_time.week
+        ):
             self.advance_game()

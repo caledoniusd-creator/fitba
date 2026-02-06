@@ -97,6 +97,7 @@ class PersonPool:
     def clear(self):
         self._people.clear()
 
+
 # def persons_main():
 #     count = 10
 #     people = [PersonFactory.random_male() for _ in range(count)]

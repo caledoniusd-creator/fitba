@@ -1,4 +1,3 @@
-from typing import List
 
 from PySide6.QtCore import Qt
 from PySide6.QtCore import *
@@ -28,7 +27,6 @@ from .viewbase import ViewBase
 
 
 class GameViewTopBar(QFrame):
-
     game_continue = Signal(name="game continue")
     run_to_post_season = Signal(name="run to post season")
     advance_new_week = Signal(name="advance new week")
@@ -79,9 +77,7 @@ class GameViewTopBar(QFrame):
             0,
             Qt.AlignRight | Qt.AlignVCenter,
         )
-        layout.addWidget(
-            btn_frame, 0, Qt.AlignRight | Qt.AlignVCenter
-        )
+        layout.addWidget(btn_frame, 0, Qt.AlignRight | Qt.AlignVCenter)
 
     def invalidate(self, world_engine: WorldStateEngine):
         if world_engine:
@@ -181,12 +177,15 @@ class GameClubView(GameTabBase):
         layout = QHBoxLayout(self)
         layout.addWidget(self._club_list, 0, Qt.AlignLeft)
         layout.addWidget(self._club_info, 1000)
-        
 
     def set_data(self):
-        clubs = self._world_engine.world.club_pool.get_all_clubs() if self._world_engine else []
+        clubs = (
+            self._world_engine.world.club_pool.get_all_clubs()
+            if self._world_engine
+            else []
+        )
         self._club_list.set_clubs(clubs)
-        
+
         self._club_info.world_worker = self._world_engine.world_worker
 
         item = self._club_list.currentItem()
@@ -194,7 +193,7 @@ class GameClubView(GameTabBase):
 
     def invalidate(self):
         self._club_info.invalidate()
-    
+
     def on_current_club_changed(self, clubs):
         self._club_info.set_club(clubs[0])
 
@@ -231,7 +230,7 @@ class GameHomeWidget(GameTabBase):
         self.top_bar.invalidate(self.world_engine)
         if self._world_engine:
             self.season_scroll.set_current_week(self._world_engine.world_time.week)
-        
+
         self._update_messages()
 
     def _get_messages(self):
@@ -240,13 +239,14 @@ class GameHomeWidget(GameTabBase):
             messages.append(f"# people: {self._world_engine.world.person_pool.count}")
             current_season = self._world_engine.world.current_season
             if current_season:
-                 messages.append(f"{current_season.fixture_schedule.fixture_count} remaining Fixtures, {current_season.fixture_schedule.result_count} completed Results")
+                messages.append(
+                    f"{current_season.fixture_schedule.fixture_count} remaining Fixtures, {current_season.fixture_schedule.result_count} completed Results"
+                )
 
             current_fixtures = self._world_engine.world_worker.get_current_fixtures()
             if current_fixtures:
                 messages.append(f"{len(current_fixtures)} fixtures pending.")
 
-           
         else:
             messages.append("WARNING: No world engine !!!!")
 
@@ -259,7 +259,6 @@ class GameHomeWidget(GameTabBase):
 
 
 class GameViewTabs(QTabWidget):
-
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         self._world_engine: WorldStateEngine | None = None
@@ -276,7 +275,6 @@ class GameViewTabs(QTabWidget):
         self._clubs_widget = GameClubsView()
         self.addTab(self._clubs_widget, "Clubs")
 
-
         self.invalidate()
         # self.setCurrentIndex(0)
         # QApplication.instance().processEvents()
@@ -284,7 +282,7 @@ class GameViewTabs(QTabWidget):
     @property
     def world_engine(self):
         return self._world_engine
-    
+
     @property
     def home_widget(self):
         return self._home_widget
@@ -345,7 +343,9 @@ class GameView(ViewBase):
 
         self.world_changed.connect(self.on_world_changed)
         self.game_continue.connect(self.on_game_continue)
-        self.game_tabs.home_widget.run_to_post_season.connect(self.on_run_to_post_season)
+        self.game_tabs.home_widget.run_to_post_season.connect(
+            self.on_run_to_post_season
+        )
         self.game_tabs.home_widget.advance_new_week.connect(self.on_advance_new_week)
 
     @property
@@ -405,7 +405,7 @@ class GameView(ViewBase):
                         result_list = ResultsList(title=title, auto_hide=False)
                         result_list.set_results(comp_result[1])
                         new_pages.append(result_list)
-                    
+
                 self.game_alt_stack.set_pages(new_pages)
                 self.view_stack.setCurrentWidget(self.game_alt_stack)
 
@@ -441,10 +441,14 @@ class GameView(ViewBase):
         self.invalidate()
 
     def on_run_to_post_season(self):
-        self._processing_update("Run to end of season!", self.world_engine.advance_to_post_season)
+        self._processing_update(
+            "Run to end of season!", self.world_engine.advance_to_post_season
+        )
 
     def on_advance_new_week(self):
-        self._processing_update("Run to new week!", self.world_engine.advance_to_new_week)
+        self._processing_update(
+            "Run to new week!", self.world_engine.advance_to_new_week
+        )
 
     def keyReleaseEvent(self, event):
         if event.key() == Qt.Key_F1:

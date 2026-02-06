@@ -18,6 +18,7 @@ from .game_views import GameView
 
 from .utils import change_font, set_white_bg
 
+
 @unique
 class AppState(Enum):
     MainMenu = auto()
@@ -25,7 +26,7 @@ class AppState(Enum):
 
 
 class BusyPage(QWidget):
-    def __init__(self, message: str="", parent=None):
+    def __init__(self, message: str = "", parent=None):
         super().__init__(parent=parent)
         self.setAutoFillBackground(True)
 
@@ -34,23 +35,21 @@ class BusyPage(QWidget):
 
         self._busy = QProgressBar()
         self._busy.setRange(0, 0)
-        
+
         self._message = QLabel(message)
         self._message.setAlignment(Qt.AlignCenter)
         change_font(self._message, 8, True)
 
         self._timer_lbl = QLabel()
-        
+
         font = QFont("DejaVu Sans Mono", 12, QFont.Bold)
         self._timer_lbl.setFont(font)
 
-        
         layout = QVBoxLayout(self)
         layout.setContentsMargins(QMargins(64, 64, 64, 64))
         layout.addWidget(self._message, 100)
-        layout.addWidget(self._timer_lbl, 0, Qt.AlignLeft| Qt.AlignBottom)
+        layout.addWidget(self._timer_lbl, 0, Qt.AlignLeft | Qt.AlignBottom)
         layout.addWidget(self._busy, 0, Qt.AlignBottom)
-
 
         self.cur_time = datetime.now()
 
@@ -69,7 +68,7 @@ class BusyPage(QWidget):
         self.stop_timer()
         print((f"Busy for {self.delta_time():.2f} seconds"))
         super().hideEvent(event)
-    
+
     def start_timer(self):
         self.stop_timer()
         self._update_timer = self.startTimer(10)
@@ -84,7 +83,7 @@ class BusyPage(QWidget):
 
     def delta_time(self):
         return (datetime.now() - self.cur_time).total_seconds()
-    
+
     def update_time_label(self):
         self._timer_lbl.setText(f"{self.delta_time():.2f} seconds")
 
@@ -104,7 +103,6 @@ class NewGameThread(QThread):
 
     def run(self):
         self.world = self._funct()
-        
 
 
 class AppMainWindow(QStackedWidget):
@@ -120,13 +118,12 @@ class AppMainWindow(QStackedWidget):
 
         self._game_menu = GameView()
         self._game_menu.main_menu.connect(self.on_main_menu)
-        
+
         self._busy_view = BusyPage()
-        
+
         main_menu_ix = self.addWidget(self._main_menu)
         self.addWidget(self._game_menu)
         self.addWidget(self._busy_view)
-        
 
         self.setCurrentIndex(main_menu_ix)
 
@@ -140,7 +137,7 @@ class AppMainWindow(QStackedWidget):
         self.move(frame.topLeft())
 
     def _on_new_game(self):
-        
+
         self._busy_view.set_message("Creating New Game")
         self.setCurrentWidget(self._busy_view)
 

@@ -1,4 +1,3 @@
-
 from typing import List
 
 
@@ -12,20 +11,19 @@ from .utils import change_font, hline
 
 
 class ClubsListWidget(QListWidget):
-
     selected_clubs = Signal(list, name="selected clubs")
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.currentItemChanged.connect(self.on_current_club_changed)
-        
+
     def on_current_club_changed(self, current: QModelIndex, previous: QModelIndex):
         club = None
         if current and current.data(Qt.UserRole):
             club = current.data(Qt.UserRole)
         self.selected_clubs.emit([club])
 
-    def set_clubs(self, clubs: List=[]):
+    def set_clubs(self, clubs: List = []):
         self.clear()
 
         def listItem(text: str, payload: any = None):
@@ -44,7 +42,6 @@ class ClubInfoWidget(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setFrameStyle(QFrame.Box | QFrame.Plain)
-
 
         self._club = None
         self._world_worker = None
@@ -74,7 +71,7 @@ class ClubInfoWidget(QFrame):
             frame_layout.addWidget(t_label, 0, Qt.AlignCenter)
             frame_layout.addWidget(widget, 1000)
             return frame
-        
+
         self._competition_list = QListWidget()
         self._fixtures_list = QListWidget()
         self._results_list = QListWidget()
@@ -88,8 +85,6 @@ class ClubInfoWidget(QFrame):
         info_frame_layout = QHBoxLayout(info_frame)
         for t, w in zip(["Competitions", "Fixtures", "Results"], widget_lists):
             info_frame_layout.addWidget(list_group(t, w))
-        
-
 
         layout = QVBoxLayout(self)
         layout.addWidget(self._club_title, 0, Qt.AlignHCenter | Qt.AlignTop)
@@ -101,7 +96,7 @@ class ClubInfoWidget(QFrame):
     @property
     def world_worker(self):
         return self._world_worker
-    
+
     @world_worker.setter
     def world_worker(self, new_world_worker):
         if self._world_worker != new_world_worker:
@@ -123,7 +118,6 @@ class ClubInfoWidget(QFrame):
     def _set_fixtures(self, fixtures: List):
         self._fixtures_list.clear()
         for fixture in fixtures:
- 
             home_team = fixture[1].club1 == self._club
             ha_text = "H" if home_team else "A"
             opponent = fixture[1].club2 if home_team else fixture[1].club1
@@ -137,12 +131,11 @@ class ClubInfoWidget(QFrame):
     def _set_results(self, results: List):
         self._results_list.clear()
         for result in results:
-
             home_team = result[1].club1 == self._club
             ha_text = "H" if home_team else "A"
             opponent = result[1].club2 if home_team else result[1].club1
 
-            h_score, a_score =result[1].home_score, result[1].away_score
+            h_score, a_score = result[1].home_score, result[1].away_score
             score_text = f"{h_score} - {a_score}"
             result_text = "D"
             if h_score > a_score:
@@ -150,13 +143,11 @@ class ClubInfoWidget(QFrame):
             elif a_score > h_score:
                 result_text = "L" if home_team else "W"
 
-
             cmp_txt = f"{result[1].competition.shortname} Rd: {result[1].round_num}"
             text = f"Week:{result[0]} {cmp_txt} {opponent.name} ({ha_text}) {score_text} {result_text}"
             item = QListWidgetItem(text)
             item.setData(Qt.UserRole, result)
             self._results_list.addItem(item)
-
 
     def invalidate(self):
         if self._club:

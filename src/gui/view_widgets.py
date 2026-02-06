@@ -6,7 +6,6 @@ from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
 
-
 from core.world_time import WorldTime
 from core.club import Club
 from core.competition import League
@@ -45,16 +44,12 @@ class FixtureLabel(QFrame):
         self.setAutoFillBackground(True)
 
         comp_label = QLabel(fixture.competition.shortname)
-        comp_label.setAlignment(
-            Qt.AlignLeft | Qt.AlignVCenter
-        )
+        comp_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         comp_label.setFixedWidth(96)
         change_font(comp_label, 2, True)
 
         home_team = QLabel(fixture.club1.name)
-        home_team.setAlignment(
-            Qt.AlignRight | Qt.AlignVCenter
-        )
+        home_team.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         home_team.setFixedWidth(255)
 
         self.vs_label = QLabel("v")
@@ -63,25 +58,15 @@ class FixtureLabel(QFrame):
         change_font(self.vs_label, 2, True)
 
         away_team = QLabel(fixture.club2.name)
-        away_team.setAlignment(
-            Qt.AlignLeft | Qt.AlignVCenter
-        )
+        away_team.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         away_team.setFixedWidth(255)
 
         layout = QHBoxLayout(self)
         layout.addStretch(10)
-        layout.addWidget(
-            comp_label, 0, Qt.AlignLeft | Qt.AlignVCenter
-        )
-        layout.addWidget(
-            home_team, 0, Qt.AlignLeft | Qt.AlignVCenter
-        )
-        layout.addWidget(
-            self.vs_label, 0, Qt.AlignLeft | Qt.AlignVCenter
-        )
-        layout.addWidget(
-            away_team, 0, Qt.AlignLeft | Qt.AlignVCenter
-        )
+        layout.addWidget(comp_label, 0, Qt.AlignLeft | Qt.AlignVCenter)
+        layout.addWidget(home_team, 0, Qt.AlignLeft | Qt.AlignVCenter)
+        layout.addWidget(self.vs_label, 0, Qt.AlignLeft | Qt.AlignVCenter)
+        layout.addWidget(away_team, 0, Qt.AlignLeft | Qt.AlignVCenter)
         layout.addStretch(10)
 
 
@@ -156,9 +141,7 @@ class LeagueTableWidget(QFrame):
 
         for ix, row in enumerate(table_data):
             club_lbl = QLabel(row.club.name)
-            club_lbl.setAlignment(
-                Qt.AlignRight | Qt.AlignVCenter
-            )
+            club_lbl.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
             club_lbl.setFixedWidth(255)
             row_ix += 1
             table_layout.addWidget(
@@ -198,9 +181,7 @@ class LeagueTableWidget(QFrame):
         table_layout.setColumnStretch(right_edge, 100)
 
         league_title_label = QLabel(competition.name)
-        league_title_label.setAlignment(
-            Qt.AlignHCenter | Qt.AlignTop
-        )
+        league_title_label.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
         change_font(league_title_label, 2, True)
 
         layout = QVBoxLayout(self)
@@ -239,9 +220,7 @@ class ClubsTableListWidget(QFrame):
                 row, col = ix // self._num_cols, (ix % self._num_cols) + 1
 
                 lbl = QLabel(club.name)
-                lbl.setAlignment(
-                    Qt.AlignLeft | Qt.AlignVCenter
-                )
+                lbl.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
                 change_font(lbl, 4, True)
 
                 self._widgets_layout.addWidget(
