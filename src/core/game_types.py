@@ -17,3 +17,21 @@ class ReputationLevel(Enum):
 
     def __str__(self):
         return str(self.name).replace("_", " ")
+
+
+@unique
+class PersonalityType(Enum):
+    Withdrawn = 1
+    Passive = 2
+    Selfish = 3
+    Unselfish = 4
+    Rebellious = 5
+    Responsible = 6
+    Arrogant = 7
+    Confident = 8
+    Thoughtful = 9
+    Rash = 10
+
+    @staticmethod
+    def random():
+        return choice([r for r in PersonalityType])

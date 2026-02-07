@@ -4,6 +4,9 @@ from random import gauss
 from typing import List
 
 
+from .game_types import PersonalityType
+
+
 @dataclass
 class Name:
     first_name: str
@@ -22,12 +25,13 @@ class Name:
 
 
 class Person:
-    def __init__(self, name: Name, age):
+    def __init__(self, name: Name, age, personality: PersonalityType):
         self.name = name
         self.age = age
+        self.personality = personality
 
     def __str__(self):
-        return f"{self.name} ({self.age})"
+        return f"{self.name} ({self.age}) [{self.personality.name}]"
 
 
 class PersonFactory:
@@ -59,7 +63,7 @@ class PersonFactory:
             min_age=min_age, max_age=max_age, average=average
         )
 
-        return Person(name, age)
+        return Person(name, age, PersonalityType.random())
 
     @staticmethod
     def random_staff(min_age=35, max_age=60, average=42):
