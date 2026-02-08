@@ -1,4 +1,4 @@
-from enum import Enum, auto, unique
+from enum import Enum, unique
 
 
 from .club import Club
@@ -6,9 +6,9 @@ from .club import Club
 
 @unique
 class CompetitionType(Enum):
-    FRIENDLY = auto()
-    LEAGUE = auto()
-    KNOCKOUT = auto()
+    FRIENDLY = 0
+    LEAGUE = 100
+    KNOCKOUT = 1000
 
 
 class Competition:

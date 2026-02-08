@@ -2,3 +2,5 @@ names==0.3.0
 pyside6==6.10.2
 pyside6_addons==6.10.2
 pyside6_essentials==6.10.2
+sqlalchemy==2.0.46
+alembic==1.18.3

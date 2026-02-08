@@ -1,6 +1,6 @@
 from enum import Enum, unique
 
-from random import choice
+from random import choice, randint
 
 
 @unique
@@ -35,3 +35,40 @@ class PersonalityType(Enum):
     @staticmethod
     def random():
         return choice([r for r in PersonalityType])
+
+    def str(self):
+        return " ".join([t[0:1].upper() + t[1:].lower() for t in self.name.split("_")])
+
+
+@unique
+class StaffRole(Enum):
+    Undefined = 0
+    Manager = 1
+    Coach = 2
+    Scout = 3
+    Physio = 4
+
+
+@unique
+class ContractType(Enum):
+    Staff_Contract = 1
+    Player_Contract = 2
+
+
+@unique
+class Position(Enum):
+    Goalkeeper = (1, "GK", "Goalkeeper")
+    Defender = (2, "DF", "Defender")
+    Midfielder = (3, "MD", "Midfielder")
+    Attacker = (4, "AT", "Attacker")
+
+    @staticmethod
+    def outfeild_positions():
+        return [Position.Defender, Position.Midfielder, Position.Attacker]
+
+    @staticmethod
+    def random(goalkeeper_ratio=1 / 7):
+        prob = int(round(1 / goalkeeper_ratio))
+        if randint(1, prob) == prob:
+            return Position.Goalkeeper
+        return choice(Position.outfeild_positions())

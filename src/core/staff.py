@@ -1,32 +1,10 @@
 from dataclasses import dataclass
-from enum import Enum, unique
-from random import randint
 from typing import List, Optional
 
 
-from .game_types import ReputationLevel
+from .game_types import ReputationLevel, StaffRole
 from .people import Person
-
-
-MAX_RATING = 100
-
-
-def random_rating(margin: float = 0.1):
-    margin_value = MAX_RATING * margin
-    min_value, max_value = (
-        int(round(margin_value)),
-        int(round(MAX_RATING - margin_value)),
-    )
-    return randint(min_value, max_value)
-
-
-@unique
-class StaffRole(Enum):
-    Undefined = 0
-    Manager = 1
-    Coach = 2
-    Scout = 3
-    Physio = 4
+from .ability import random_ability
 
 
 @dataclass
@@ -34,14 +12,14 @@ class StaffMember:
     person: Person
     role: StaffRole
     reputation: Optional[ReputationLevel] = None
-    rating: Optional[int] = None
+    ability: Optional[int] = None
 
     def __post_init__(self):
         self.reputation = self.reputation or ReputationLevel.random()
-        self.rating = self.rating or random_rating(0.15)
+        self.ability = self.ability or random_ability(0.15)
 
     def __str__(self):
-        return f"{self.person.name.short_name} {str(self.role)} {self.reputation} ({self.rating})"
+        return f"{self.person.name.short_name} {str(self.role)} {self.reputation} ({self.ability})"
 
     def __hash__(self):
         return hash(str(self))
@@ -50,7 +28,7 @@ class StaffMember:
 class StaffMemberFactory:
     @staticmethod
     def random_staff_member(person: Person, role: StaffRole):
-        return StaffMember(person, role, ReputationLevel.random(), random_rating())
+        return StaffMember(person, role, ReputationLevel.random(), random_ability())
 
 
 class StaffPool:

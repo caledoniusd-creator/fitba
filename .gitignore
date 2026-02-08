@@ -1,5 +1,6 @@
 # Python-generated files
 __pycache__/
+
 *.py[oc]
 build/
 dist/
@@ -9,5 +10,8 @@ wheels/
 # Virtual environments
 .venv
 uv.lock
-data/.~lock.16 team league schedule.ods#
 .coverage
+
+# folders
+var/
+data/
