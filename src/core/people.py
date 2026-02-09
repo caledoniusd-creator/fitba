@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-import names
+from faker import Faker
 from random import gauss
 from typing import List
 
@@ -11,6 +11,12 @@ from .game_types import PersonalityType
 class Name:
     first_name: str
     last_name: str
+
+
+    @staticmethod
+    def random_male_name():
+        return Name(PersonFactory.fake.first_name_male(), PersonFactory.fake.last_name())
+
 
     def __str__(self):
         return self.full_name
@@ -35,6 +41,9 @@ class Person:
 
 
 class PersonFactory:
+
+    fake = Faker("en_GB")
+
     @staticmethod
     def generate_age(
         min_age: int, max_age: int, average: float, std_dev: float | None = None
@@ -55,15 +64,15 @@ class PersonFactory:
             age = gauss(average, std_dev)
             if min_age <= age <= max_age:
                 return round(age)
-
+    
+        
     @staticmethod
     def random_male(min_age=18, max_age=65, average=40):
-        name = Name(names.get_first_name(gender="male"), names.get_last_name())
         age = PersonFactory.generate_age(
             min_age=min_age, max_age=max_age, average=average
         )
 
-        return Person(name, age, PersonalityType.random())
+        return Person(Name.random_male_name(), age, PersonalityType.random())
 
     @staticmethod
     def random_staff(min_age=35, max_age=60, average=42):

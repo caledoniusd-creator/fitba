@@ -20,6 +20,14 @@ class Base(DeclarativeBase):
     pass
 
 
+class SeasonDB(Base):
+    __tablename__ = "seasons"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    year: Mapped[int] = mapped_column(Integer, unique=True)
+
+    def __repr__(self) -> str:
+        return f"[{id}] Season: {self.year}"
+    
 class PersonDB(Base):
     __tablename__ = "persons"
 
@@ -50,11 +58,10 @@ class PersonDB(Base):
 
 class StaffDB(Base):
     __tablename__ = "staff"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
     person_id: Mapped[int] = mapped_column(
         ForeignKey("persons.id"),
         unique=True,  # 👈 enforce one-to-one at DB level
+        primary_key=True
     )
 
     role: Mapped[StaffRole] = mapped_column(SAEnum(StaffRole))
@@ -67,14 +74,12 @@ class StaffDB(Base):
 class PlayerDB(Base):
     __tablename__ = "players"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
     person_id: Mapped[int] = mapped_column(
         ForeignKey("persons.id"),
         unique=True,  # 👈 enforce one-to-one at DB level
+        primary_key=True
     )
-
     position: Mapped[Position] = mapped_column(SAEnum(Position))
-
     ability: Mapped[int] = mapped_column(Integer)
 
 
@@ -159,7 +164,10 @@ class CupDB(CompetitionDB):
 class CompetitionRegisterDB(Base):
     __tablename__ = "competition_registry"
     id: Mapped[int] = mapped_column(primary_key=True)
-    season: Mapped[int] = mapped_column(Integer)
+    season_id: Mapped[int] = mapped_column(
+        ForeignKey("seasons.id"),
+        nullable=False
+    )
     competition_id: Mapped[int] = mapped_column(
         ForeignKey("competitions.id"),
     )

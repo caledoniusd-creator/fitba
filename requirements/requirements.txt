@@ -1,4 +1,5 @@
 names==0.3.0
+faker==40.4.0
 pyside6==6.10.2
 pyside6_addons==6.10.2
 pyside6_essentials==6.10.2
