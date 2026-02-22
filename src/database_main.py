@@ -1,15 +1,15 @@
 from argparse import ArgumentParser
-from functools import wraps
 import logging
 from random import shuffle, randint
 from sqlalchemy import select
 from time import perf_counter
 from traceback import format_exc
-
+from typing import List
 from src.core.game_types import ReputationLevel, Position, StaffRole, ContractType
 
 from src.core.ability import random_ability
 from src.core.club import CLUB_NAMES
+from src.core.competition import CompetitionType
 from src.core.people import PersonFactory
 from src.core.db.models import (
     SeasonDB,
@@ -18,10 +18,14 @@ from src.core.db.models import (
     PlayerDB,
     ClubDB,
     ContractDB,
+    CompetitionDB,
     LeagueGroupDB,
     LeagueDB,
     CupDB,
     CompetitionRegisterDB,
+    FixtureDB,
+    ResultDB,
+    WorldDB
 )
 from src.core.db.utils import create_session, create_tables
 
@@ -30,6 +34,83 @@ from src.core.utils import timer
 
 def contract_expiry():
     return 52 * randint(1, 4)
+
+
+league_30_fixtures = [
+    8,
+    9,
+    10,
+    11,
+    12,
+    14,
+    15,
+    16,
+    17,
+    18,
+    21,
+    22,
+    23,
+    24,
+    25,
+    28,
+    29,
+    30,
+    31,
+    32,
+    35,
+    36,
+    37,
+    38,
+    39,
+    42,
+    43,
+    44,
+    45,
+    46,
+]
+
+def create_league_fixtures(clubs: List, reverse_fixtures: bool = False):
+    club_count = len(clubs)
+    fixtures = []
+    num_rounds = club_count - 1
+    club_list = list(clubs)
+    shuffle(club_list)
+
+    if len(club_list) % 2 != 0:
+        club_list.append(None)  # Add a dummy club for bye
+
+    half_size = len(club_list) // 2
+
+    # Generate fixtures using the round-robin algorithm
+    for round_num in range(num_rounds):
+        round_fixtures = []
+        for i in range(half_size):
+            club1 = club_list[i]
+            club2 = club_list[(half_size + i)]
+            if round_num % 2 != 0:
+                club1, club2 = club2, club1
+            if club1 is not None and club2 is not None:
+                fixture = (round_num + 1, club1, club2)
+                round_fixtures.append(fixture)
+
+        fixtures.append(round_fixtures)
+        club_list.append(club_list.pop(1))
+
+    if reverse_fixtures:
+        reverse_rounds = []
+        for round_fixtures in fixtures:
+            reverse_round = []
+            for fixture in round_fixtures:
+                reverse_fixture = (
+                    fixture[0] + num_rounds,
+                    fixture[2],
+                    fixture[1],
+                )
+                reverse_round.append(reverse_fixture)
+            reverse_rounds.append(reverse_round)
+        fixtures.extend(reverse_rounds)
+    return fixtures
+
 
 
 class DatabaseWorker:
@@ -48,11 +129,44 @@ class DatabaseWorker:
     def get_leagues(self):
         return self.get_session().scalars(select(LeagueDB)).all()
     
+    def get_leagues_from_competitions(self):
+        session = self.get_session()
+        return session.scalars(
+            select(CompetitionDB).where(CompetitionDB.competition_type == CompetitionType.LEAGUE)
+        ).all()
+    
     def get_cups(self):
         return self.get_session().scalars(select(CupDB)).all()
     
     def get_compition_registrations(self, season:SeasonDB):
         return self.get_session().scalars(select(CompetitionRegisterDB).where(CompetitionRegisterDB.season_id==season.id)).all()
+    
+    def get_clubs_in_league_for_season(self, season: SeasonDB, league: LeagueDB):
+        session = self.get_session()
+        clubs = session.scalars(
+            select(ClubDB)
+            .join(CompetitionRegisterDB, ClubDB.id == CompetitionRegisterDB.club_id)
+            .where(CompetitionRegisterDB.season_id == season.id)
+            .where(CompetitionRegisterDB.competition_id == league.id)
+        ).all()
+        return clubs
+    
+    def get_clubs_in_leagues_for_season(self, season: SeasonDB):
+        session = self.get_session()
+        league_ids = session.scalars(select(LeagueDB.id)).all()
+        clubs = session.scalars(
+            select(ClubDB)
+            .join(CompetitionRegisterDB, ClubDB.id == CompetitionRegisterDB.club_id)
+            .where(CompetitionRegisterDB.season_id == season.id)
+            .where(CompetitionRegisterDB.competition_id.in_(league_ids))
+        ).all()
+        return clubs
+    
+    def get_current_league_clubs(self):
+        season = self.get_current_season()
+        if season:
+            return self.get_clubs_in_leagues_for_season(season)
+        return []
     
     def get_current_season(self):
         seasons = self.get_seasons()
@@ -60,6 +174,47 @@ class DatabaseWorker:
             return seasons[-1]
         return None
     
+    def get_current_week(self):
+        session = self.get_session()
+        world = session.scalars(select(WorldDB)).first()
+        if world:
+            return world.current_week
+        return None
+    
+    def get_fixtures_for_current_week(self):
+        session = self.get_session()
+        world = session.scalars(select(WorldDB)).first()
+        if world:
+            return session.scalars(
+                select(FixtureDB)
+                .where(FixtureDB.season_id == world.season_id)
+                .where(FixtureDB.season_week == world.current_week)
+            ).all()
+        return []
+    
+    def advance_week(self):
+        session = self.get_session()
+        world = session.scalars(select(WorldDB)).first()
+        if world:
+            world.current_week += 1
+            session.commit()
+
+    def get_results_for_club_in_competition(self, season: SeasonDB, competition: CompetitionDB, club: ClubDB):
+        session = self.get_session()
+        return session.scalars(
+            select(ResultDB)
+            .join(FixtureDB, ResultDB.id == FixtureDB.id)
+            .where(FixtureDB.season_id == season.id)
+            .where(FixtureDB.competition_id == competition.id)
+            .where((FixtureDB.home_club_id == club.id) | (FixtureDB.away_club_id == club.id))
+        ).all()
+
+    def get_fixture_from_result(self, result: ResultDB):
+        session = self.get_session()
+        return session.scalars(
+            select(FixtureDB).where(FixtureDB.id == result.id)
+        ).first()
+
     @timer
     def create_next_season(self):
         seasons = self.get_seasons()
@@ -77,6 +232,19 @@ class DatabaseWorker:
 
         return new_season
     
+    def add_result(self, fixture, score):
+        session = self.get_session()
+        result = ResultDB(id=fixture.id, home_score=score[0], away_score=score[1])
+        session.add(result)
+        session.commit()
+
+    def add_results(self, fixtures_and_scores):
+        session = self.get_session()
+        for fs in fixtures_and_scores:
+            result = ResultDB(id=fs[0].id, home_score=fs[1][0], away_score=fs[1][1])
+            session.add(result)
+        session.commit()
+
     @timer
     def do_post_season_setup(self):
         logging.info(f"Post Season Setup...")
@@ -132,7 +300,64 @@ class DatabaseWorker:
                     )
                     session.add(reg)
             session.commit()
-        
+
+    @timer
+    def do_new_season(self):
+        logging.info("New Season Setup...")
+
+        current_season = self.get_current_season()
+       
+
+        # get all leagues
+        leagues = self.get_leagues()
+
+        session = self.get_session()
+
+        world = None
+        if current_season:
+
+            world =  session.scalars(select(WorldDB)).all()
+            if not world:
+                world = WorldDB(season_id=current_season.id)
+                session.add(world)
+            else:
+                world = world[0]
+                world.season_id = current_season.id
+            session.commit()
+
+        for league in leagues:
+            logging.info(f"Create fixtures for {league}")
+
+            # get registered teams
+            league_clubs = self.get_clubs_in_league_for_season(current_season, league)
+            names = [c.name for c in league_clubs]
+            logging.info(f"{len(league_clubs)} Clubs " + ", ".join(names))
+
+            fixtures = create_league_fixtures(league_clubs, True)
+            for ix, r_fixtures in enumerate(fixtures):
+                for f in r_fixtures:
+                    fixture = FixtureDB(
+                        home_club_id=f[1].id,
+                        away_club_id=f[2].id,
+                        competition_id=league.id,
+                        competition_round=f[0],
+                        season_id = current_season.id,
+                        season_week = league_30_fixtures[ix]
+                    )
+                    session.add(fixture)
+            session.commit()
+
+            total = sum([len(f) for f in fixtures])
+            logging.info(f"#Num Rounds {len(fixtures)} #Num Fixtures: {total}")
+
+        all_fixtures = session.scalars(select(FixtureDB)).all()
+        logging.info(f"All league fixtures added: {len(all_fixtures)}")
+
+        if world:
+            world.current_week = 1
+            session.commit()
+
+
 class DatabaseCreator(DatabaseWorker):
 
     def __init__(self, db_path: str, delete_existing: bool = True):
@@ -161,6 +386,8 @@ class DatabaseCreator(DatabaseWorker):
             f"# Staff Reg: {num_staff_reg}, # Player Reg: {num_player_reg}" \
             f", # Comp Reg: {comp_reg}" 
         )
+
+        self.do_new_season()
             
     @timer
     def _create_db_clubs(self):
@@ -415,14 +642,53 @@ class DatabaseCreator(DatabaseWorker):
             ).all()
         )
 
-  
-
-class GameWorker(DatabaseWorker):
-    def __init__(self, db_path: str):
-        super().__init__(db_path=db_path)
     
-    def new_season(self):
-        pass
+
+def create_score():
+    min_goals, max_goals = 0, 5
+    return randint(min_goals, max_goals), randint(min_goals, max_goals)
+
+
+def create_league_table_data(club: ClubDB, results: List, db_worker: DatabaseWorker):
+    data = {
+        "club": club,
+        "ply": 0, "w": 0, "d": 0, "l": 0, "gf": 0, "ga": 0, "gd": 0, "pts": 0
+    }
+
+    for result in results:
+        fixture = db_worker.get_fixture_from_result(result)
+        if fixture.home_club_id == club.id:
+            home = True
+        elif fixture.away_club_id == club.id:
+            home = False
+
+        else:
+            raise RuntimeError(f"{club.name} not in fixture: {fixture}")
+        
+        data["ply"] += 1
+
+        if result.home_score == result.away_score:
+            data["d"] += 1
+            data["gf"] += result.home_score
+            data["ga"] += result.away_score
+        else:
+            if result.home_score > result.away_score:
+                if home:
+                    data["w"] += 1
+                else:
+                    data["l"] += 1
+            else:
+                if home:
+                    data["l"] += 1
+                else:
+                    data["w"] += 1
+            data["gf"] += result.home_score
+            data["ga"] += result.away_score
+
+    data["gd"] = data["gf"] - data["ga"]
+    data["pts"] = (data["w"] * 3) + data["d"]
+    return data
+
 
 def db_main():
 
@@ -438,10 +704,57 @@ def db_main():
         DatabaseCreator(db_path=db_path, delete_existing=delete_existsing).create_db()
 
 
-        # logging.info("TODO! Create New Season...")
-        # logging.info("TODO! Create Competition Fixtures...")
-        # logging.info("TODO! Simulate Season...")
-        # logging.info("TODO! Process End of Season...")
+        logging.info("Simulate Season...")
+        db_worker = DatabaseWorker(db_path=db_path)
+        while True:
+            current_week = db_worker.get_current_week()
+            
+
+            if current_week != 52:
+                current_fixtures = db_worker.get_fixtures_for_current_week()
+                logging.info(f"Current Week: {current_week} # fixtures {len(current_fixtures)}")
+                if current_fixtures:
+                    fixtures_and_scores = []
+                    for fixture in current_fixtures:
+                        score = create_score()
+                        fixtures_and_scores.append((fixture, score))
+                        # db_worker.add_result(fixture, score)
+                    db_worker.add_results(fixtures_and_scores=fixtures_and_scores)
+                db_worker.advance_week()
+
+            else:
+                break
+
+            
+
+        logging.info("Process End of Season...")
+        current_season = db_worker.get_current_season()
+        leagues = db_worker.get_leagues_from_competitions()
+        for league in leagues:
+            clubs = db_worker.get_clubs_in_league_for_season(season=current_season, league=league)
+            league_data = list()
+            for club in clubs:
+                results = db_worker.get_results_for_club_in_competition(season=current_season, competition=league, club=club)
+                league_data.append(create_league_table_data(club, results, db_worker))
+
+            league_data.sort(key=lambda d: (-d["pts"], -d["gf"], -d["gd"], d["club"].name))
+
+            logging.info(f"{league.name} Table")
+            for ld in league_data:
+                text = [
+                    ld["club"].name.ljust(30),
+                    str(ld["ply"]).center(3),
+                    str(ld["w"]).center(3),
+                    str(ld["d"]).center(3),
+                    str(ld["l"]).center(3),
+                    str(ld["gf"]).center(3),
+                    str(ld["ga"]).center(3),
+                    str(ld["gd"]).center(3),
+                    str(ld["pts"]).center(3),
+                    
+                ]
+                logging.info(f"{'|'.join(text)}")
+        
 
         total_time = perf_counter() - start_time
         logging.info(f"Took {total_time:.6f} seconds")

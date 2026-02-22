@@ -150,6 +150,9 @@ class LeagueDB(CompetitionDB):
         "polymorphic_identity": CompetitionType.LEAGUE,
     }
 
+    def __str__(self):
+        return self.name
+
 
 class CupDB(CompetitionDB):
     __tablename__ = "cups"
@@ -194,7 +197,13 @@ class FixtureDB(Base):
         ForeignKey("competitions.id"),
     )
 
-    ability: Mapped[int] = mapped_column(Integer)
+    competition_round: Mapped[int] = mapped_column(Integer)
+
+    season_id: Mapped[int] = mapped_column(
+        ForeignKey("seasons.id"),
+    )
+
+    season_week: Mapped[int] = mapped_column(Integer)
 
     # discriminator column for fixture subclasses (joined-table polymorphism)
     fixture_type: Mapped[str] = mapped_column(String(20), default="fixture")
@@ -205,7 +214,7 @@ class FixtureDB(Base):
     }
 
 
-class ResultDB(FixtureDB):
+class ResultDB(Base):
     __tablename__ = "results"
 
     id: Mapped[int] = mapped_column(ForeignKey("fixtures.id"), primary_key=True)
@@ -213,6 +222,13 @@ class ResultDB(FixtureDB):
     home_score: Mapped[int] = mapped_column(Integer)
     away_score: Mapped[int] = mapped_column(Integer)
 
-    __mapper_args__ = {
-        "polymorphic_identity": "result",
-    }
+
+
+class WorldDB(Base):
+    __tablename__ = "world"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    season_id: Mapped[int] = mapped_column(
+        ForeignKey("seasons.id"),
+    )
+    current_week: Mapped[int] = mapped_column(Integer, default=0)

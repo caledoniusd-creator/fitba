@@ -80,3 +80,5 @@ def create_league_fixtures(league: League, reverse_fixtures: bool = False):
             reverse_rounds.append(reverse_round)
         fixtures.extend(reverse_rounds)
     return fixtures
+
+
