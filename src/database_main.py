@@ -6,11 +6,11 @@ from time import perf_counter
 from traceback import format_exc
 from typing import List
 from src.core.game_types import (
-    WeekType, 
-    ReputationLevel, 
-    Position, 
-    StaffRole, 
-    ContractType
+    WeekType,
+    ReputationLevel,
+    Position,
+    StaffRole,
+    ContractType,
 )
 
 from src.core.world_time import WEEKS_IN_YEAR
@@ -46,16 +46,36 @@ def contract_expiry():
 
 
 league_30_fixtures = [
-6, 7, 8,
-10, 11, 12,
-14, 15, 16,
-18, 19, 20,
-22, 23, 24,
-27, 28, 29,
-31, 32, 33,
-35, 36, 37,
-39, 40, 41,
-43, 44, 45,
+    6,
+    7,
+    8,
+    10,
+    11,
+    12,
+    14,
+    15,
+    16,
+    18,
+    19,
+    20,
+    22,
+    23,
+    24,
+    27,
+    28,
+    29,
+    31,
+    32,
+    33,
+    35,
+    36,
+    37,
+    39,
+    40,
+    41,
+    43,
+    44,
+    45,
 ]
 
 
@@ -246,7 +266,10 @@ class DatabaseWorker:
 
     def add_results(self, fixtures_and_scores):
         session = self.get_session()
-        results = [ResultDB(id=fs[0].id, home_score=fs[1][0], away_score=fs[1][1]) for fs in fixtures_and_scores]
+        results = [
+            ResultDB(id=fs[0].id, home_score=fs[1][0], away_score=fs[1][1])
+            for fs in fixtures_and_scores
+        ]
         session.add_all(results)
         session.commit()
 
@@ -381,7 +404,9 @@ class DatabaseCreator(DatabaseWorker):
         session = self.get_session()
         weeks = []
         for week in range(1, WEEKS_IN_YEAR + 1):
-            if not session.scalars(select(WeekDB).where(WeekDB.week_num == week)).first():
+            if not session.scalars(
+                select(WeekDB).where(WeekDB.week_num == week)
+            ).first():
                 if week <= 5:
                     role = WeekType.Preseason
                 elif week <= 48:
@@ -396,7 +421,6 @@ class DatabaseCreator(DatabaseWorker):
 
         weeks = session.scalars(select(WeekDB)).all()
         logging.info(f"Weeks in DB: {len(weeks)}")
-
 
     @timer
     def create_db(self):
@@ -740,7 +764,9 @@ def create_league_table_data(club: ClubDB, results: List, db_worker: DatabaseWor
     return data
 
 
-def get_league_table_data(league: LeagueDB, current_season: SeasonDB, db_worker: DatabaseWorker):
+def get_league_table_data(
+    league: LeagueDB, current_season: SeasonDB, db_worker: DatabaseWorker
+):
     clubs = db_worker.get_clubs_in_league_for_season(
         season=current_season, league=league
     )
@@ -751,14 +777,12 @@ def get_league_table_data(league: LeagueDB, current_season: SeasonDB, db_worker:
         )
         league_data.append(create_league_table_data(club, results, db_worker))
 
-    league_data.sort(
-        key=lambda d: (-d["pts"], -d["gf"], -d["gd"], d["club"].name)
-    )
+    league_data.sort(key=lambda d: (-d["pts"], -d["gf"], -d["gd"], d["club"].name))
     return league_data
 
 
 def league_table_text(league_data):
-    league_table_text = ["", ("-" * 80), f"League Table"]
+    league_table_text = ["", ("-" * 80), "League Table"]
 
     for ld in league_data:
         text = [
@@ -778,16 +802,18 @@ def league_table_text(league_data):
 
 
 class GameDBWorker:
-
     DEFAULT_DB_PATH = "var/football.db"
 
     def __init__(self, db_path: str | None = None):
-        self._db_path = db_path or self.DEFAULT_DB_PATH 
-
+        self._db_path = db_path or self.DEFAULT_DB_PATH
 
     def create_new_database(self, delete_existing: bool = True):
-        logging.info(f"Creating new database at {self._db_path}, delete existing: {delete_existing}")
-        DatabaseCreator(db_path=self._db_path, delete_existing=delete_existing).create_db()
+        logging.info(
+            f"Creating new database at {self._db_path}, delete existing: {delete_existing}"
+        )
+        DatabaseCreator(
+            db_path=self._db_path, delete_existing=delete_existing
+        ).create_db()
 
     def run_season(self):
         logging.info("Simulate Season...")
@@ -810,16 +836,17 @@ class GameDBWorker:
 
             else:
                 break
-    
+
     def process_end_of_season(self):
         logging.info("Process End of Season...")
         db_worker = DatabaseWorker(db_path=self._db_path)
         current_season = db_worker.get_current_season()
         leagues = db_worker.get_leagues_from_competitions()
         for league in leagues:
-            league_data = get_league_table_data(league, current_season, db_worker)  
+            league_data = get_league_table_data(league, current_season, db_worker)
             text = league_table_text(league_data)
             logging.info(f"{'\n'.join(text)}")
+
 
 def db_main():
 
@@ -832,11 +859,10 @@ def db_main():
         start_time = perf_counter()
 
         game_worker = GameDBWorker()
-        
+
         game_worker.create_new_database(delete_existing=True)
         game_worker.run_season()
         game_worker.process_end_of_season()
-
 
         total_time = perf_counter() - start_time
         logging.info(f"Took {total_time:.6f} seconds")

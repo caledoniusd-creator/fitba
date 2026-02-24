@@ -31,6 +31,7 @@ class WeekDB(Base):
     def __str__(self):
         return f"Week {self.week_num:2d}: {self.role}"
 
+
 class SeasonDB(Base):
     __tablename__ = "seasons"
     id: Mapped[int] = mapped_column(primary_key=True)
