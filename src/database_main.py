@@ -246,9 +246,8 @@ class DatabaseWorker:
 
     def add_results(self, fixtures_and_scores):
         session = self.get_session()
-        for fs in fixtures_and_scores:
-            result = ResultDB(id=fs[0].id, home_score=fs[1][0], away_score=fs[1][1])
-            session.add(result)
+        results = [ResultDB(id=fs[0].id, home_score=fs[1][0], away_score=fs[1][1]) for fs in fixtures_and_scores]
+        session.add_all(results)
         session.commit()
 
     @timer
@@ -258,6 +257,8 @@ class DatabaseWorker:
         next_season = self.create_next_season()
 
         clubs_for_cup = []
+        session = self.get_session()
+        regs = []
         if not current_season:
             logging.info("No current season random league allocation")
 
@@ -267,7 +268,6 @@ class DatabaseWorker:
             club_copy = list(clubs)
             shuffle(club_copy)
 
-            session = self.get_session()
             for league in leagues:
                 for _ in range(league.required_teams):
                     club = club_copy.pop(0)
@@ -276,8 +276,9 @@ class DatabaseWorker:
                         competition_id=league.id,
                         club_id=club.id,
                     )
-                    session.add(reg)
+                    regs.append(reg)
                     clubs_for_cup.append(club.id)
+            session.add_all(regs)
             session.commit()
 
         else:
@@ -286,7 +287,6 @@ class DatabaseWorker:
             leagues = self.get_leagues()
             leagues_ids = [l.id for l in leagues]
             last_season_reg = self.get_compition_registrations(current_season)
-            session = self.get_session()
             for reg in last_season_reg:
                 if reg.competition_id in leagues_ids:
                     new_reg = CompetitionRegisterDB(
@@ -294,12 +294,14 @@ class DatabaseWorker:
                         competition_id=reg.competition_id,
                         club_id=reg.club_id,
                     )
-                    session.add(new_reg)
+                    regs.append(new_reg)
                     clubs_for_cup.append(new_reg.club_id)
+            session.add_all(regs)
             session.commit()
 
         if clubs_for_cup:
             logging.info("Do cup registration")
+            cup_regs = []
             for cup in self.get_cups():
                 club_copy = list(clubs_for_cup)
                 shuffle(club_copy)
@@ -308,7 +310,8 @@ class DatabaseWorker:
                     reg = CompetitionRegisterDB(
                         season_id=next_season.id, competition_id=cup.id, club_id=club
                     )
-                    session.add(reg)
+                    cup_regs.append(reg)
+            session.add_all(cup_regs)
             session.commit()
 
     @timer
@@ -342,6 +345,7 @@ class DatabaseWorker:
             logging.info(f"{len(league_clubs)} Clubs " + ", ".join(names))
 
             fixtures = create_league_fixtures(league_clubs, True)
+            fixture_objects = []
             for ix, r_fixtures in enumerate(fixtures):
                 for f in r_fixtures:
                     fixture = FixtureDB(
@@ -352,7 +356,8 @@ class DatabaseWorker:
                         season_id=current_season.id,
                         season_week=league_30_fixtures[ix],
                     )
-                    session.add(fixture)
+                    fixture_objects.append(fixture)
+            session.add_all(fixture_objects)
             session.commit()
 
             total = sum([len(f) for f in fixtures])
@@ -374,6 +379,7 @@ class DatabaseCreator(DatabaseWorker):
     def _pre_populate_db(self):
         logging.info("Pre-populate DB with static data if needed")
         session = self.get_session()
+        weeks = []
         for week in range(1, WEEKS_IN_YEAR + 1):
             if not session.scalars(select(WeekDB).where(WeekDB.week_num == week)).first():
                 if week <= 5:
@@ -383,7 +389,9 @@ class DatabaseCreator(DatabaseWorker):
                 else:
                     role = WeekType.Postseason
 
-                session.add(WeekDB(week_num=week, role=role))
+                weeks.append(WeekDB(week_num=week, role=role))
+        if weeks:
+            session.add_all(weeks)
         session.commit()
 
         weeks = session.scalars(select(WeekDB)).all()
@@ -424,9 +432,8 @@ class DatabaseCreator(DatabaseWorker):
 
         shuffle(names)
         session = self.get_session()
-        for name in names:
-            new_club = ClubDB(name=name)
-            session.add(new_club)
+        clubs = [ClubDB(name=name) for name in names]
+        session.add_all(clubs)
         session.commit()
 
         return len(session.scalars(select(ClubDB)).all())
@@ -473,8 +480,9 @@ class DatabaseCreator(DatabaseWorker):
             logging.info(f"Creating {count_data[1]} x {count_data[0].name}s...")
 
         session = self.get_session()
+        all_persons = []
+        all_staff = []
         for count_data in counts:
-            persons = []
             for _ in range(count_data[1]):
                 staff = PersonFactory.random_staff()
                 person = PersonDB(
@@ -483,19 +491,20 @@ class DatabaseCreator(DatabaseWorker):
                     age=staff.age,
                     personality=staff.personality,
                 )
-                session.add(person)
-                persons.append(person)
-            session.commit()
-
-            for person in persons:
+                all_persons.append(person)
                 db_staff = StaffDB(
-                    person_id=person.id,
+                    person_id=person.id,  # This will be set after flush
                     role=count_data[0],
                     reputation_type=ReputationLevel.random(),
                     ability=random_ability(),
                 )
-                session.add(db_staff)
-            session.commit()
+                all_staff.append((person, db_staff))
+        session.add_all(all_persons)
+        session.flush()  # Flush to get IDs
+        for person, db_staff in all_staff:
+            db_staff.person_id = person.id
+            session.add(db_staff)
+        session.commit()
 
         return len(session.scalars(select(StaffDB)).all())
 
@@ -504,9 +513,9 @@ class DatabaseCreator(DatabaseWorker):
         num_players = 15 * num_clubs * 2
         logging.info(f"Creating {num_players} players...")
 
-        persons = []
-
         session = self.get_session()
+        all_persons = []
+        all_players = []
         for _ in range(num_players):
             player = PersonFactory.random_player()
             person = PersonDB(
@@ -515,16 +524,17 @@ class DatabaseCreator(DatabaseWorker):
                 age=player.age,
                 personality=player.personality,
             )
-            session.add(person)
-            persons.append(person)
-        session.commit()
-
-        for person in persons:
+            all_persons.append(person)
             player_db = PlayerDB(
-                person_id=person.id,
+                person_id=person.id,  # Will be set after flush
                 position=Position.random(),
                 ability=random_ability(),
             )
+            all_players.append((person, player_db))
+        session.add_all(all_persons)
+        session.flush()
+        for person, player_db in all_players:
+            player_db.person_id = person.id
             session.add(player_db)
         session.commit()
         return len(session.scalars(select(PlayerDB)).all())
@@ -551,6 +561,7 @@ class DatabaseCreator(DatabaseWorker):
         shuffle(clubs)
         shuffle(managers)
 
+        contracts = []
         for club in clubs:
             manager = managers.pop(0)
             contract = ContractDB(
@@ -560,7 +571,7 @@ class DatabaseCreator(DatabaseWorker):
                 wage=100,
                 contract_type=ContractType.Staff_Contract,
             )
-            session.add(contract)
+            contracts.append(contract)
 
         shuffle(clubs)
         shuffle(coaches)
@@ -575,7 +586,7 @@ class DatabaseCreator(DatabaseWorker):
                     wage=100,
                     contract_type=ContractType.Staff_Contract,
                 )
-                session.add(contract)
+                contracts.append(contract)
 
         shuffle(clubs)
         shuffle(scouts)
@@ -589,7 +600,7 @@ class DatabaseCreator(DatabaseWorker):
                     wage=100,
                     contract_type=ContractType.Staff_Contract,
                 )
-                session.add(contract)
+                contracts.append(contract)
 
         shuffle(clubs)
         shuffle(physios)
@@ -603,7 +614,8 @@ class DatabaseCreator(DatabaseWorker):
                 wage=100,
                 contract_type=ContractType.Staff_Contract,
             )
-            session.add(contract)
+            contracts.append(contract)
+        session.add_all(contracts)
         session.commit()
 
         return len(
@@ -633,6 +645,7 @@ class DatabaseCreator(DatabaseWorker):
             select(PlayerDB).where(PlayerDB.position == Position.Attacker)
         ).all()
 
+        contracts = []
         shuffle(clubs)
         shuffle(goalkeepers)
         for _ in range(3):
@@ -646,7 +659,7 @@ class DatabaseCreator(DatabaseWorker):
                     wage=100,
                     contract_type=ContractType.Player_Contract,
                 )
-                session.add(contract)
+                contracts.append(contract)
 
         for plist in [defenders, midfielders, attackers]:
             for _ in range(4):
@@ -661,7 +674,8 @@ class DatabaseCreator(DatabaseWorker):
                         wage=100,
                         contract_type=ContractType.Player_Contract,
                     )
-                    session.add(contract)
+                    contracts.append(contract)
+        session.add_all(contracts)
         session.commit()
 
         return len(
@@ -763,25 +777,25 @@ def league_table_text(league_data):
     return league_table_text
 
 
-def db_main():
+class GameDBWorker:
 
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format="[%(asctime)s|%(thread)x|%(levelname)s|%(module)s.%(funcName)s] %(message)s",
-    )
+    DEFAULT_DB_PATH = "var/football.db"
 
-    try:
-        start_time = perf_counter()
-        db_path = "var/football.db"
-        delete_existsing = True
-        DatabaseCreator(db_path=db_path, delete_existing=delete_existsing).create_db()
+    def __init__(self, db_path: str | None = None):
+        self._db_path = db_path or self.DEFAULT_DB_PATH 
 
+
+    def create_new_database(self, delete_existing: bool = True):
+        logging.info(f"Creating new database at {self._db_path}, delete existing: {delete_existing}")
+        DatabaseCreator(db_path=self._db_path, delete_existing=delete_existing).create_db()
+
+    def run_season(self):
         logging.info("Simulate Season...")
-        db_worker = DatabaseWorker(db_path=db_path)
+        db_worker = DatabaseWorker(db_path=self._db_path)
         while True:
             current_week = db_worker.get_current_week()
 
-            if current_week != 52:
+            if current_week != WEEKS_IN_YEAR:
                 current_fixtures = db_worker.get_fixtures_for_current_week()
                 logging.info(
                     f"Current Week: {current_week} # fixtures {len(current_fixtures)}"
@@ -796,14 +810,33 @@ def db_main():
 
             else:
                 break
-
+    
+    def process_end_of_season(self):
         logging.info("Process End of Season...")
+        db_worker = DatabaseWorker(db_path=self._db_path)
         current_season = db_worker.get_current_season()
         leagues = db_worker.get_leagues_from_competitions()
         for league in leagues:
             league_data = get_league_table_data(league, current_season, db_worker)  
             text = league_table_text(league_data)
             logging.info(f"{'\n'.join(text)}")
+
+def db_main():
+
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format="[%(asctime)s|%(thread)x|%(levelname)s|%(module)s.%(funcName)s] %(message)s",
+    )
+
+    try:
+        start_time = perf_counter()
+
+        game_worker = GameDBWorker()
+        
+        game_worker.create_new_database(delete_existing=True)
+        game_worker.run_season()
+        game_worker.process_end_of_season()
+
 
         total_time = perf_counter() - start_time
         logging.info(f"Took {total_time:.6f} seconds")
