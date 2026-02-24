@@ -4,6 +4,16 @@ from random import choice, randint
 
 
 @unique
+class WeekType(Enum):
+    Preseason = 1
+    Regular_Season = 2
+    Postseason = 3
+
+    def __str__(self):
+        return self.name.replace("_", " ")
+
+
+@unique
 class ReputationLevel(Enum):
     Unknown = 0
     Poor = 1

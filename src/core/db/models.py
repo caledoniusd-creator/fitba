@@ -2,10 +2,11 @@ from __future__ import annotations
 
 
 from sqlalchemy import ForeignKey, String, Integer, Enum as SAEnum
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
 from ..game_types import (
+    WeekType,
     PersonalityType,
     StaffRole,
     ReputationLevel,
@@ -20,14 +21,36 @@ class Base(DeclarativeBase):
     pass
 
 
+class WeekDB(Base):
+    __tablename__ = "weeks"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    week_num: Mapped[int] = mapped_column(Integer)
+    role: Mapped[WeekType] = mapped_column(SAEnum(WeekType))
+
+    def __str__(self):
+        return f"Week {self.week_num:2d}: {self.role}"
+
 class SeasonDB(Base):
     __tablename__ = "seasons"
     id: Mapped[int] = mapped_column(primary_key=True)
     year: Mapped[int] = mapped_column(Integer, unique=True)
 
+    # Reverse relationships
+    competition_registrations: Mapped[list[CompetitionRegisterDB]] = relationship(
+        "CompetitionRegisterDB", back_populates="season"
+    )
+    fixtures: Mapped[list[FixtureDB]] = relationship(
+        "FixtureDB", back_populates="season"
+    )
+    world: Mapped[WorldDB] = relationship(
+        "WorldDB", back_populates="season", uselist=False
+    )
+
     def __repr__(self) -> str:
         return f"[{id}] Season: {self.year}"
-    
+
+
 class PersonDB(Base):
     __tablename__ = "persons"
 
@@ -38,6 +61,17 @@ class PersonDB(Base):
     age: Mapped[int] = mapped_column(Integer)
 
     personality: Mapped[PersonalityType] = mapped_column(SAEnum(PersonalityType))
+
+    # Reverse relationships
+    staff: Mapped[StaffDB] = relationship(
+        "StaffDB", back_populates="person", uselist=False
+    )
+    player: Mapped[PlayerDB] = relationship(
+        "PlayerDB", back_populates="person", uselist=False
+    )
+    contract: Mapped[ContractDB] = relationship(
+        "ContractDB", back_populates="person", uselist=False
+    )
 
     def __repr__(self) -> str:
         return (
@@ -61,7 +95,7 @@ class StaffDB(Base):
     person_id: Mapped[int] = mapped_column(
         ForeignKey("persons.id"),
         unique=True,  # 👈 enforce one-to-one at DB level
-        primary_key=True
+        primary_key=True,
     )
 
     role: Mapped[StaffRole] = mapped_column(SAEnum(StaffRole))
@@ -70,6 +104,9 @@ class StaffDB(Base):
 
     ability: Mapped[int] = mapped_column(Integer)
 
+    # Reverse relationship
+    person: Mapped[PersonDB] = relationship("PersonDB", back_populates="staff")
+
 
 class PlayerDB(Base):
     __tablename__ = "players"
@@ -77,16 +114,33 @@ class PlayerDB(Base):
     person_id: Mapped[int] = mapped_column(
         ForeignKey("persons.id"),
         unique=True,  # 👈 enforce one-to-one at DB level
-        primary_key=True
+        primary_key=True,
     )
     position: Mapped[Position] = mapped_column(SAEnum(Position))
     ability: Mapped[int] = mapped_column(Integer)
+
+    # Reverse relationship
+    person: Mapped[PersonDB] = relationship("PersonDB", back_populates="player")
 
 
 class ClubDB(Base):
     __tablename__ = "clubs"
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String, unique=True, index=True)
+
+    # Reverse relationships
+    contracts: Mapped[list[ContractDB]] = relationship(
+        "ContractDB", back_populates="club"
+    )
+    home_fixtures: Mapped[list[FixtureDB]] = relationship(
+        "FixtureDB", back_populates="home_club", foreign_keys="FixtureDB.home_club_id"
+    )
+    away_fixtures: Mapped[list[FixtureDB]] = relationship(
+        "FixtureDB", back_populates="away_club", foreign_keys="FixtureDB.away_club_id"
+    )
+    competition_registrations: Mapped[list[CompetitionRegisterDB]] = relationship(
+        "CompetitionRegisterDB", back_populates="club"
+    )
 
 
 class ContractDB(Base):
@@ -107,6 +161,10 @@ class ContractDB(Base):
 
     contract_type: Mapped[ContractType] = mapped_column(SAEnum(ContractType))
 
+    # Reverse relationships
+    person: Mapped[PersonDB] = relationship("PersonDB", back_populates="contract")
+    club: Mapped[ClubDB] = relationship("ClubDB", back_populates="contracts")
+
 
 class CompetitionDB(Base):
     __tablename__ = "competitions"
@@ -124,6 +182,14 @@ class CompetitionDB(Base):
         )
     )
 
+    # Reverse relationships
+    fixtures: Mapped[list[FixtureDB]] = relationship(
+        "FixtureDB", back_populates="competition"
+    )
+    competition_registrations: Mapped[list[CompetitionRegisterDB]] = relationship(
+        "CompetitionRegisterDB", back_populates="competition"
+    )
+
     __mapper_args__ = {
         "polymorphic_on": "competition_type",
     }
@@ -135,6 +201,11 @@ class LeagueGroupDB(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[String] = mapped_column(String(50), unique=True, index=True)
 
+    # Reverse relationship
+    leagues: Mapped[list[LeagueDB]] = relationship(
+        "LeagueDB", back_populates="league_group"
+    )
+
 
 class LeagueDB(CompetitionDB):
     __tablename__ = "leagues"
@@ -145,6 +216,11 @@ class LeagueDB(CompetitionDB):
 
     league_ranking: Mapped[int] = mapped_column(Integer)
     required_teams: Mapped[int] = mapped_column(Integer)
+
+    # Reverse relationship
+    league_group: Mapped[LeagueGroupDB] = relationship(
+        "LeagueGroupDB", back_populates="leagues"
+    )
 
     __mapper_args__ = {
         "polymorphic_identity": CompetitionType.LEAGUE,
@@ -167,16 +243,24 @@ class CupDB(CompetitionDB):
 class CompetitionRegisterDB(Base):
     __tablename__ = "competition_registry"
     id: Mapped[int] = mapped_column(primary_key=True)
-    season_id: Mapped[int] = mapped_column(
-        ForeignKey("seasons.id"),
-        nullable=False
-    )
+    season_id: Mapped[int] = mapped_column(ForeignKey("seasons.id"), nullable=False)
     competition_id: Mapped[int] = mapped_column(
         ForeignKey("competitions.id"),
     )
 
     club_id: Mapped[int] = mapped_column(
         ForeignKey("clubs.id"),
+    )
+
+    # Reverse relationships
+    season: Mapped[SeasonDB] = relationship(
+        "SeasonDB", back_populates="competition_registrations"
+    )
+    competition: Mapped[CompetitionDB] = relationship(
+        "CompetitionDB", back_populates="competition_registrations"
+    )
+    club: Mapped[ClubDB] = relationship(
+        "ClubDB", back_populates="competition_registrations"
     )
 
 
@@ -208,6 +292,21 @@ class FixtureDB(Base):
     # discriminator column for fixture subclasses (joined-table polymorphism)
     fixture_type: Mapped[str] = mapped_column(String(20), default="fixture")
 
+    # Reverse relationships
+    home_club: Mapped[ClubDB] = relationship(
+        "ClubDB", back_populates="home_fixtures", foreign_keys=[home_club_id]
+    )
+    away_club: Mapped[ClubDB] = relationship(
+        "ClubDB", back_populates="away_fixtures", foreign_keys=[away_club_id]
+    )
+    competition: Mapped[CompetitionDB] = relationship(
+        "CompetitionDB", back_populates="fixtures"
+    )
+    season: Mapped[SeasonDB] = relationship("SeasonDB", back_populates="fixtures")
+    result: Mapped[ResultDB] = relationship(
+        "ResultDB", back_populates="fixture", uselist=False
+    )
+
     __mapper_args__ = {
         "polymorphic_on": "fixture_type",
         "polymorphic_identity": "fixture",
@@ -222,6 +321,8 @@ class ResultDB(Base):
     home_score: Mapped[int] = mapped_column(Integer)
     away_score: Mapped[int] = mapped_column(Integer)
 
+    # Reverse relationship
+    fixture: Mapped[FixtureDB] = relationship("FixtureDB", back_populates="result")
 
 
 class WorldDB(Base):
@@ -232,3 +333,6 @@ class WorldDB(Base):
         ForeignKey("seasons.id"),
     )
     current_week: Mapped[int] = mapped_column(Integer, default=0)
+
+    # Reverse relationship
+    season: Mapped[SeasonDB] = relationship("SeasonDB", back_populates="world")
