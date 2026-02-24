@@ -15,4 +15,4 @@ uv.lock
 # folders
 .vscode/
 var/
-data/
+data/.vscode/
