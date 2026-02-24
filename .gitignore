@@ -13,5 +13,6 @@ uv.lock
 .coverage
 
 # folders
+.vscode/
 var/
 data/
