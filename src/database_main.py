@@ -405,6 +405,48 @@ class DatabaseWorker:
                 new_registrations.append((reg.club_id, reg.competition_id))
         return new_registrations
 
+    def get_club_details(self, club: ClubDB, season: SeasonDB):
+        session = self.get_session()
+        
+        # Get staff and players from contracts
+        staff_contracts = session.scalars(
+            select(ContractDB)
+            .where(ContractDB.club_id == club.id)
+            .where(ContractDB.contract_type == ContractType.Staff_Contract)
+        ).all()
+        staff = [session.scalars(select(StaffDB).where(StaffDB.person_id == c.person_id)).first() for c in staff_contracts]
+        
+        player_contracts = session.scalars(
+            select(ContractDB)
+            .where(ContractDB.club_id == club.id)
+            .where(ContractDB.contract_type == ContractType.Player_Contract)
+        ).all()
+        players = [session.scalars(select(PlayerDB).where(PlayerDB.person_id == c.person_id)).first() for c in player_contracts]
+        
+        # Get registered competitions
+        competitions = session.scalars(
+            select(CompetitionDB)
+            .join(CompetitionRegisterDB, CompetitionDB.id == CompetitionRegisterDB.competition_id)
+            .where(CompetitionRegisterDB.club_id == club.id)
+            .where(CompetitionRegisterDB.season_id == season.id)
+        ).all()
+        
+        # Get fixtures and results
+        fixtures = session.scalars(
+            select(FixtureDB)
+            .where(FixtureDB.season_id == season.id)
+            .where((FixtureDB.home_club_id == club.id) | (FixtureDB.away_club_id == club.id))
+        ).all()
+        
+        results = session.scalars(
+            select(ResultDB)
+            .join(FixtureDB, ResultDB.id == FixtureDB.id)
+            .where(FixtureDB.season_id == season.id)
+            .where((FixtureDB.home_club_id == club.id) | (FixtureDB.away_club_id == club.id))
+        ).all()
+        
+        return staff, players, competitions, fixtures, results
+
     @timer
     def create_next_season(self):
         seasons = self.get_seasons()

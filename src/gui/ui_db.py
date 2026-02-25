@@ -33,6 +33,205 @@ class DBObject(QObject):
         return self.db_worker.current_date()
 
 
+class TitleLabel(QLabel):
+    def __init__(self, title: str, size: int = 16, parent=None):
+        super().__init__(parent=parent)
+        self.setText(title)
+        self.setAlignment(Qt.AlignCenter)
+        self.setFont(QFont("DejaVu Sans", size, QFont.Bold))
+
+
+class TitledTreeWidget(QFrame):
+    def __init__(self, title: str, parent=None):
+        super().__init__(parent=parent)
+        self.setFrameStyle(QFrame.StyledPanel | QFrame.Plain)
+        self.setAutoFillBackground(True)
+
+        self._tree = QTreeWidget(self)
+    
+        layout = QVBoxLayout(self)
+        layout.addWidget(TitleLabel(title, 12), 0, Qt.AlignTop | Qt.AlignHCenter)
+        layout.addWidget(self._tree, 100)
+
+    @property
+    def tree(self):
+        return self._tree
+    
+    def clear(self):
+        self._tree.clear()
+
+
+class TitledListWidget(QFrame):
+    def __init__(self, title: str, parent=None):
+        super().__init__(parent=parent)
+        self.setFrameStyle(QFrame.StyledPanel | QFrame.Plain)
+        self.setAutoFillBackground(True)
+
+        self._list_widget = QListWidget(self)
+    
+        layout = QVBoxLayout(self)
+        layout.addWidget(TitleLabel(title, 12), 0, Qt.AlignTop | Qt.AlignHCenter)
+        layout.addWidget(self._list_widget, 100)
+
+    @property
+    def list_widget(self):
+        return self._list_widget
+    
+    def clear(self):
+        self._list_widget.clear()
+
+
+
+class StaffTreeWidget(TitledTreeWidget):
+    def __init__(self, parent=None):
+        super().__init__(title="Staff", parent=parent)
+        self.tree.setHeaderLabels(["Role", "Name", "Ability", "Reputation", "Personality"])
+
+    def set_staff(self, staff_list):
+        self.tree.clear()
+        for staff in staff_list:
+            item = QTreeWidgetItem([
+                staff.role.name,
+                staff.person.full_name,
+                str(staff.ability),
+                staff.reputation_type.name,
+                staff.person.personality.name
+            ])
+            self.tree.addTopLevelItem(item)
+
+
+class PlayerTreeWidget(TitledTreeWidget):
+    def __init__(self, parent=None):
+        super().__init__(title="Players", parent=parent)
+        self.tree.setHeaderLabels(["Position", "Name", "Ability", "Personality"])
+
+    def set_players(self, player_list):
+        self.tree.clear()
+        for player in player_list:
+            item = QTreeWidgetItem([
+                player.position.name,
+                player.person.full_name,
+                str(player.ability),
+                player.person.personality.name
+            ])
+            self.tree.addTopLevelItem(item)
+
+
+class CompetitionListWidget(TitledListWidget):
+    def __init__(self, parent=None):
+        super().__init__(title="Competitions", parent=parent)
+
+    def set_competitions(self, comp_list):
+        self.list_widget.clear()
+        for comp in comp_list:
+            item = QListWidgetItem(comp.name)
+            item.setData(Qt.UserRole, comp)
+            self.list_widget.addItem(item)
+
+
+class ClubWidget(QWidget):
+    
+    DEFAULT_TITLE = "No club selected"
+
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
+        self._club = None
+        self.setAutoFillBackground(True)
+
+
+        self._title = TitleLabel(ClubWidget.DEFAULT_TITLE)
+
+        self._staff_list = StaffTreeWidget()
+        self._player_list = PlayerTreeWidget()
+        self._comp_list = CompetitionListWidget()
+
+        person_frame = QFrame()
+        person_frame.setFrameStyle(QFrame.StyledPanel | QFrame.Plain)
+
+        left_layout = QVBoxLayout()
+        left_layout.addWidget(self._staff_list)
+        left_layout.addWidget(self._comp_list)
+
+        person_layout = QHBoxLayout(person_frame)
+        person_layout.addLayout(left_layout)
+        person_layout.addWidget(self._player_list)
+
+    
+        layout = QVBoxLayout(self)
+        layout.addWidget(self._title, 0, Qt.AlignTop | Qt.AlignHCenter)
+        layout.addWidget(person_frame, 100)
+
+        self.invalidate()
+
+    @property
+    def club(self):
+        return self._club
+    
+    @club.setter
+    def club(self, club):
+        self._club = club
+        self.invalidate()
+
+    def invalidate(self):
+        if self ._club is not None:
+            self._title.setText(f"{self._club.name}")
+            self._staff_list.set_staff(self._club.staff_members())
+            self._player_list.set_players(self._club.players())
+            self._comp_list.set_competitions(self._club.competitions())
+
+
+        else:
+            self._title.setText(ClubWidget.DEFAULT_TITLE)
+            self._staff_list.clear()
+            self._player_list.clear()
+            self._comp_list.clear()
+
+
+class ClubView(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
+        self.setAutoFillBackground(True)
+
+        self._club_List = QListWidget(self)
+        self._club_List.currentItemChanged.connect(self.on_club_changed)
+        self._club_view = ClubWidget(self)
+
+        self._club = None
+
+        layout = QHBoxLayout(self)
+        layout.addWidget(self._club_List, 0, Qt.AlignTop | Qt.AlignLeft)
+        layout.addWidget(self._club_view, 100)   
+        
+
+    def set_club(self, club):
+        self._club = club
+
+    def invalidate(self, db_worker: DBObject | None):
+        if db_worker is not None:
+            clubs = db_worker.db_worker.worker.get_clubs()
+            self._club_List.clear()
+            for club in clubs:
+                item = QListWidgetItem(club.name)
+                item.setData(Qt.UserRole, club)
+                self._club_List.addItem(item)
+        else:
+            self._club_List.clear()
+            self._club = None
+
+
+    def on_club_changed(self, current: QListWidgetItem | None, previous: QListWidgetItem | None):
+        print("Club changed !")
+        if current is not None:
+            club = current.data(Qt.UserRole)
+           
+            self.set_club(club)
+            self._club_view.club = self._club
+        else:
+            self.set_club(None)
+            self._club_view.club = None
+
+
+
 class DBMainGameView(QWidget):
     continue_game = Signal(name="advanced_game")
     main_menu = Signal(name="main_menu")
@@ -40,6 +239,9 @@ class DBMainGameView(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         self.setAutoFillBackground(True)
+
+
+        self.tabView = QTabWidget()
 
         self.date_label = QLabel()
         self.date_label.setFrameStyle(QFrame.Panel | QFrame.Plain)
@@ -59,20 +261,28 @@ class DBMainGameView(QWidget):
 
         self._club_list = QListView()
         self._comp_list = QListView()
-        self._people_list = QListView()
-        self._staff_list = QListView()
-        self._player_list = QListView()
+        # self._people_list = QListView()
+        # self._staff_list = QListView()
+        # self._player_list = QListView()
 
-        list_layout = QHBoxLayout()
+        list_widgets = QWidget()
+        list_layout = QHBoxLayout(list_widgets)
         list_layout.addWidget(self._club_list)
         list_layout.addWidget(self._comp_list)
-        list_layout.addWidget(self._people_list)
-        list_layout.addWidget(self._staff_list)
-        list_layout.addWidget(self._player_list)
+        # list_layout.addWidget(self._people_list)
+        # list_layout.addWidget(self._staff_list)
+        # list_layout.addWidget(self._player_list)
+
+        self._club_view = ClubView()
+        self.tabView.addTab(self._club_view, "Clubs")
+        self.tabView.addTab(list_widgets, "All Data")
+
+        self.tabView.setCurrentIndex(0)
 
         layout = QVBoxLayout(self)
         layout.addLayout(top_layout)
-        layout.addLayout(list_layout, 100)
+        layout.addWidget(self.tabView, 100)
+        # layout.addWidget(list_widgets, 100)
         # layout.addStretch(100)
 
         set_white_bg(self)
@@ -106,31 +316,33 @@ class DBMainGameView(QWidget):
             ]
             self._comp_list.setModel(QStringListModel(comps))
 
-            people = [
-                f"{ix + 1:04d}: {p.full_name} ({p.age}) {p.personality.name}"
-                for ix, p in enumerate(db_worker.get_people())
-            ]
-            self._people_list.setModel(QStringListModel(people))
+            # people = [
+            #     f"{ix + 1:04d}: {p.full_name} ({p.age}) {p.personality.name}"
+            #     for ix, p in enumerate(db_worker.get_people())
+            # ]
+            # self._people_list.setModel(QStringListModel(people))
 
-            staff = [
-                f"{ix + 1:04d}: {s.person.full_name} - {s.role.name} (Rep: {s.reputation_type.name}, Abil: {s.ability})"
-                for ix, s in enumerate(db_worker.get_staff())
-            ]
-            self._staff_list.setModel(QStringListModel(staff))
+            # staff = [
+            #     f"{ix + 1:04d}: {s.person.full_name} - {s.role.name} (Rep: {s.reputation_type.name}, Abil: {s.ability})"
+            #     for ix, s in enumerate(db_worker.get_staff())
+            # ]
+            # self._staff_list.setModel(QStringListModel(staff))
 
-            players = [
-                f"{ix + 1:04d}: {p.person.full_name} - {p.position.name} (Abil: {p.ability})"
-                for ix, p in enumerate(db_worker.get_players())
-            ]
-            self._player_list.setModel(QStringListModel(players))
+            # players = [
+            #     f"{ix + 1:04d}: {p.person.full_name} - {p.position.name} (Abil: {p.ability})"
+            #     for ix, p in enumerate(db_worker.get_players())
+            # ]
+            # self._player_list.setModel(QStringListModel(players))
 
         else:
             self.date_label.clear()
             self._club_list.setModel(QStringListModel())
             self._comp_list.setModel(QStringListModel())
-            self._people_list.setModel(QStringListModel())
-            self._staff_list.setModel(QStringListModel())
-            self._player_list.setModel(QStringListModel())
+            # self._people_list.setModel(QStringListModel())
+            # self._staff_list.setModel(QStringListModel())
+            # self._player_list.setModel(QStringListModel())
+
+        self._club_view.invalidate(self._db_worker)
 
     def has_db_worker(self):
         return self._db_worker is not None
@@ -191,7 +403,7 @@ class MainView(QStackedWidget):
         self.setAutoFillBackground(True)
         self.setContentsMargins(QMargins(0, 0, 0, 0))
 
-        self.setMinimumSize(800, 600)
+        self.setMinimumSize(1920, 1080)
         self.setWindowTitle("Fitba DB GUI")
 
         self._views = {
@@ -283,8 +495,8 @@ class GUIDBApplication(QApplication):
         self.widget = None
 
     def run(self):
-        print(f"Fonts: {', '.join(QFontDatabase.families())}")
-        print("Styles: " + ", ".join(QStyleFactory.keys()))
+        # print(f"Fonts: {', '.join(QFontDatabase.families())}")
+        # print("Styles: " + ", ".join(QStyleFactory.keys()))
         # QApplication.setStyle(QStyleFactory.create("Windows"))
         QApplication.setStyle(QStyleFactory.create("Fusion"))
 
