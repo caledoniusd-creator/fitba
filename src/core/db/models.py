@@ -51,6 +51,9 @@ class SeasonDB(Base):
     def __repr__(self) -> str:
         return f"[{id}] Season: {self.year}"
 
+    def __str__(self):
+        return f"Season {self.year}"
+
 
 class PersonDB(Base):
     __tablename__ = "persons"
@@ -176,12 +179,7 @@ class CompetitionDB(Base):
     short_name: Mapped[str] = mapped_column(String(6), unique=True, index=True)
 
     # support legacy lowercase string values stored in the DB (e.g. 'league')
-    competition_type: Mapped[CompetitionType] = mapped_column(
-        SAEnum(
-            CompetitionType,
-            values_callable=lambda enums: [e.name.lower() for e in enums],
-        )
-    )
+    competition_type: Mapped[CompetitionType] = mapped_column(SAEnum(CompetitionType))
 
     # Reverse relationships
     fixtures: Mapped[list[FixtureDB]] = relationship(

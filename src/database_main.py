@@ -1,8 +1,10 @@
+from __future__ import annotations
 from argparse import ArgumentParser
 import logging
 from random import shuffle, randint
 from sqlalchemy import select
-from time import perf_counter
+from sqlalchemy.orm import selectinload
+from time import perf_counter, sleep
 from traceback import format_exc
 from typing import List
 from src.core.game_types import (
@@ -39,6 +41,19 @@ from src.core.db.models import (
 from src.core.db.utils import create_session, create_tables
 
 from src.core.utils import timer
+
+# logger = logging.getLogger("myapp")
+# logger.setLevel(logging.DEBUG)
+
+# handler = logging.StreamHandler()  # console
+# handler.setLevel(logging.DEBUG)
+
+# formatter = logging.Formatter(
+#     "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
+# )
+# handler.setFormatter(formatter)
+
+# logger.addHandler(handler)
 
 
 def contract_expiry():
@@ -122,6 +137,70 @@ def create_league_fixtures(clubs: List, reverse_fixtures: bool = False):
     return fixtures
 
 
+def create_league_table_data(club: ClubDB, results: List):
+    data = {
+        "club": club,
+        "ply": 0,
+        "w": 0,
+        "d": 0,
+        "l": 0,
+        "gf": 0,
+        "ga": 0,
+        "gd": 0,
+        "pts": 0,
+    }
+
+    for result in results:
+        fixture = result.fixture
+        if fixture.home_club_id == club.id:
+            home = True
+        elif fixture.away_club_id == club.id:
+            home = False
+        else:
+            raise RuntimeError(f"{club.name} not in fixture: {fixture}")
+
+        data["ply"] += 1
+
+        if result.home_score == result.away_score:
+            data["d"] += 1
+            data["gf"] += result.home_score
+            data["ga"] += result.away_score
+        else:
+            if result.home_score > result.away_score:
+                if home:
+                    data["w"] += 1
+                else:
+                    data["l"] += 1
+            else:
+                if home:
+                    data["l"] += 1
+                else:
+                    data["w"] += 1
+            data["gf"] += result.home_score
+            data["ga"] += result.away_score
+
+    data["gd"] = data["gf"] - data["ga"]
+    data["pts"] = (data["w"] * 3) + data["d"]
+    return data
+
+
+def get_league_table_data(
+    league: LeagueDB, current_season: SeasonDB, db_worker: DatabaseWorker
+):
+    clubs = db_worker.get_clubs_in_league_for_season(
+        season=current_season, league=league
+    )
+    league_data = list()
+    for club in clubs:
+        results = db_worker.get_results_for_club_in_competition(
+            season=current_season, competition=league, club=club
+        )
+        league_data.append(create_league_table_data(club, results))
+
+    league_data.sort(key=lambda d: (-d["pts"], -d["gf"], -d["gd"], d["club"].name))
+    return league_data
+
+
 class DatabaseWorker:
     def __init__(self, db_path: str):
         self._db_path = db_path
@@ -134,8 +213,26 @@ class DatabaseWorker:
             self.get_session().scalars(select(SeasonDB).order_by(SeasonDB.year)).all()
         )
 
+    def get_week(self, week_num: int):
+        session = self.get_session()
+        return session.scalars(
+            select(WeekDB).where(WeekDB.week_num == week_num)
+        ).first()
+
     def get_clubs(self):
         return self.get_session().scalars(select(ClubDB)).all()
+
+    def get_competitions(self):
+        return self.get_session().scalars(select(CompetitionDB)).all()
+
+    def get_people(self):
+        return self.get_session().scalars(select(PersonDB)).all()
+
+    def get_staff(self):
+        return self.get_session().scalars(select(StaffDB)).all()
+
+    def get_players(self):
+        return self.get_session().scalars(select(PlayerDB)).all()
 
     def get_leagues(self):
         return self.get_session().scalars(select(LeagueDB)).all()
@@ -227,6 +324,7 @@ class DatabaseWorker:
         return session.scalars(
             select(ResultDB)
             .join(FixtureDB, ResultDB.id == FixtureDB.id)
+            .options(selectinload(ResultDB.fixture))
             .where(FixtureDB.season_id == season.id)
             .where(FixtureDB.competition_id == competition.id)
             .where(
@@ -240,6 +338,72 @@ class DatabaseWorker:
         return session.scalars(
             select(FixtureDB).where(FixtureDB.id == result.id)
         ).first()
+
+    def get_clubs_not_in_leagues_for_season(self, season: SeasonDB | None = None):
+        season = season or self.get_current_season()
+        session = self.get_session()
+        league_ids = session.scalars(select(LeagueDB.id)).all()
+        clubs = session.scalars(
+            select(ClubDB).where(
+                ~ClubDB.id.in_(
+                    select(CompetitionRegisterDB.club_id)
+                    .where(CompetitionRegisterDB.season_id == season.id)
+                    .where(CompetitionRegisterDB.competition_id.in_(league_ids))
+                )
+            )
+        ).all()
+        return clubs
+
+    def get_league_registrations_for_current_season(self):
+        season = self.get_current_season()
+        if not season:
+            return []
+        session = self.get_session()
+        league_ids = session.scalars(select(LeagueDB.id)).all()
+        registrations = session.scalars(
+            select(CompetitionRegisterDB)
+            .where(CompetitionRegisterDB.season_id == season.id)
+            .where(CompetitionRegisterDB.competition_id.in_(league_ids))
+        ).all()
+        return registrations
+
+    def get_next_season_league_registrations(self):
+        promoted_count = 3
+        relegated_count = 3
+        current_season = self.get_current_season()
+        leagues = self.get_leagues_from_competitions()
+
+        changes = dict()
+        for ix, league in enumerate(leagues):
+            league_data = get_league_table_data(league, current_season, self)
+            if ix > 0:
+                # Promote from league
+                for p in league_data[0:promoted_count]:
+                    changes[p["club"].id] = leagues[ix - 1].id
+
+            # Relegate from league
+            league_below = leagues[ix + 1] if ix < len(leagues) - 1 else None
+
+            for r in league_data[-relegated_count:]:
+                changes[r["club"].id] = league_below.id if league_below else None
+
+            if league_below is None:
+                new_clubs = self.get_clubs_not_in_leagues_for_season()
+                shuffle(new_clubs)
+                for p in new_clubs[0:promoted_count]:
+                    changes[p.id] = league.id
+
+        new_registrations = []
+        for club_id, new_league_id in changes.items():
+            if new_league_id is not None:
+                new_registrations.append((club_id, new_league_id))
+
+        for reg in self.get_league_registrations_for_current_season():
+            if reg.club_id in changes.keys():
+                pass
+            else:
+                new_registrations.append((reg.club_id, reg.competition_id))
+        return new_registrations
 
     @timer
     def create_next_season(self):
@@ -260,68 +424,60 @@ class DatabaseWorker:
 
     def add_result(self, fixture, score):
         session = self.get_session()
-        result = ResultDB(id=fixture.id, home_score=score[0], away_score=score[1])
-        session.add(result)
+        session.add(ResultDB(id=fixture.id, home_score=score[0], away_score=score[1]))
         session.commit()
 
     def add_results(self, fixtures_and_scores):
         session = self.get_session()
-        results = [
-            ResultDB(id=fs[0].id, home_score=fs[1][0], away_score=fs[1][1])
-            for fs in fixtures_and_scores
-        ]
-        session.add_all(results)
+        session.add_all(
+            [
+                ResultDB(id=fs[0].id, home_score=fs[1][0], away_score=fs[1][1])
+                for fs in fixtures_and_scores
+            ]
+        )
         session.commit()
 
     @timer
     def do_post_season_setup(self):
         logging.info("Post Season Setup...")
         current_season = self.get_current_season()
-        next_season = self.create_next_season()
 
-        clubs_for_cup = []
-        session = self.get_session()
-        regs = []
-        if not current_season:
-            logging.info("No current season random league allocation")
+        if current_season:
+            next_season_registrations = self.get_next_season_league_registrations()
 
+        else:
             clubs = self.get_clubs()
             leagues = self.get_leagues()
 
             club_copy = list(clubs)
             shuffle(club_copy)
 
+            next_season_registrations = []
             for league in leagues:
                 for _ in range(league.required_teams):
                     club = club_copy.pop(0)
-                    reg = CompetitionRegisterDB(
-                        season_id=next_season.id,
-                        competition_id=league.id,
-                        club_id=club.id,
-                    )
-                    regs.append(reg)
-                    clubs_for_cup.append(club.id)
-            session.add_all(regs)
+                    next_season_registrations.append((club.id, league.id))
+
+        # create next season
+        next_season = self.create_next_season()
+
+        new_regs = list()
+        for reg in next_season_registrations:
+            if reg[1] is None:
+                continue
+            new_reg = CompetitionRegisterDB(
+                season_id=next_season.id,
+                competition_id=reg[1],
+                club_id=reg[0],
+            )
+            new_regs.append(new_reg)
+
+        if new_regs:
+            session = self.get_session()
+            session.add_all(new_regs)
             session.commit()
 
-        else:
-            logging.info(f"{next_season} - do promotion and relegation")
-
-            leagues = self.get_leagues()
-            leagues_ids = [l.id for l in leagues]
-            last_season_reg = self.get_compition_registrations(current_season)
-            for reg in last_season_reg:
-                if reg.competition_id in leagues_ids:
-                    new_reg = CompetitionRegisterDB(
-                        season_id=next_season.id,
-                        competition_id=reg.competition_id,
-                        club_id=reg.club_id,
-                    )
-                    regs.append(new_reg)
-                    clubs_for_cup.append(new_reg.club_id)
-            session.add_all(regs)
-            session.commit()
-
+        clubs_for_cup = self.get_clubs_in_leagues_for_season(next_season)
         if clubs_for_cup:
             logging.info("Do cup registration")
             cup_regs = []
@@ -331,11 +487,14 @@ class DatabaseWorker:
 
                 for club in club_copy:
                     reg = CompetitionRegisterDB(
-                        season_id=next_season.id, competition_id=cup.id, club_id=club
+                        season_id=next_season.id, competition_id=cup.id, club_id=club.id
                     )
                     cup_regs.append(reg)
-            session.add_all(cup_regs)
-            session.commit()
+
+            if cup_regs:
+                session = self.get_session()
+                session.add_all(cup_regs)
+                session.commit()
 
     @timer
     def do_new_season(self):
@@ -364,9 +523,6 @@ class DatabaseWorker:
 
             # get registered teams
             league_clubs = self.get_clubs_in_league_for_season(current_season, league)
-            names = [c.name for c in league_clubs]
-            logging.info(f"{len(league_clubs)} Clubs " + ", ".join(names))
-
             fixtures = create_league_fixtures(league_clubs, True)
             fixture_objects = []
             for ix, r_fixtures in enumerate(fixtures):
@@ -386,8 +542,8 @@ class DatabaseWorker:
             total = sum([len(f) for f in fixtures])
             logging.info(f"#Num Rounds {len(fixtures)} #Num Fixtures: {total}")
 
-        all_fixtures = session.scalars(select(FixtureDB)).all()
-        logging.info(f"All league fixtures added: {len(all_fixtures)}")
+        # all_fixtures = session.scalars(select(FixtureDB)).all()
+        # logging.info(f"All league fixtures added: {len(all_fixtures)}")
 
         if world:
             world.current_week = 1
@@ -447,7 +603,7 @@ class DatabaseCreator(DatabaseWorker):
             f", # Comp Reg: {comp_reg}"
         )
 
-        self.do_new_season()
+        # self.do_new_season()
 
     @timer
     def _create_db_clubs(self):
@@ -716,71 +872,6 @@ def create_score():
     return randint(min_goals, max_goals), randint(min_goals, max_goals)
 
 
-def create_league_table_data(club: ClubDB, results: List, db_worker: DatabaseWorker):
-    data = {
-        "club": club,
-        "ply": 0,
-        "w": 0,
-        "d": 0,
-        "l": 0,
-        "gf": 0,
-        "ga": 0,
-        "gd": 0,
-        "pts": 0,
-    }
-
-    for result in results:
-        fixture = db_worker.get_fixture_from_result(result)
-        if fixture.home_club_id == club.id:
-            home = True
-        elif fixture.away_club_id == club.id:
-            home = False
-
-        else:
-            raise RuntimeError(f"{club.name} not in fixture: {fixture}")
-
-        data["ply"] += 1
-
-        if result.home_score == result.away_score:
-            data["d"] += 1
-            data["gf"] += result.home_score
-            data["ga"] += result.away_score
-        else:
-            if result.home_score > result.away_score:
-                if home:
-                    data["w"] += 1
-                else:
-                    data["l"] += 1
-            else:
-                if home:
-                    data["l"] += 1
-                else:
-                    data["w"] += 1
-            data["gf"] += result.home_score
-            data["ga"] += result.away_score
-
-    data["gd"] = data["gf"] - data["ga"]
-    data["pts"] = (data["w"] * 3) + data["d"]
-    return data
-
-
-def get_league_table_data(
-    league: LeagueDB, current_season: SeasonDB, db_worker: DatabaseWorker
-):
-    clubs = db_worker.get_clubs_in_league_for_season(
-        season=current_season, league=league
-    )
-    league_data = list()
-    for club in clubs:
-        results = db_worker.get_results_for_club_in_competition(
-            season=current_season, competition=league, club=club
-        )
-        league_data.append(create_league_table_data(club, results, db_worker))
-
-    league_data.sort(key=lambda d: (-d["pts"], -d["gf"], -d["gd"], d["club"].name))
-    return league_data
-
-
 def league_table_text(league_data):
     league_table_text = ["", ("-" * 80), "League Table"]
 
@@ -815,17 +906,52 @@ class GameDBWorker:
             db_path=self._db_path, delete_existing=delete_existing
         ).create_db()
 
+    @property
+    def worker(self):
+        return DatabaseWorker(db_path=self._db_path)
+
+    def do_new_season(self):
+        logging.info("Do new season setup...")
+        db_worker = DatabaseWorker(db_path=self._db_path)
+        db_worker.do_new_season()
+
+    def process_current_week(self):
+        db_worker = DatabaseWorker(db_path=self._db_path)
+        current_season = db_worker.get_current_season()
+        current_week = db_worker.get_current_week()
+        week_db = db_worker.get_week(current_week)
+        logging.info(f"Process Current Week: {week_db}...")
+
+        if current_week >= WEEKS_IN_YEAR:
+            logging.info(f"End of season [{current_season}] reached...")
+            self.process_end_of_season()
+            self.do_new_season()
+        else:
+            current_fixtures = db_worker.get_fixtures_for_current_week()
+            if current_fixtures:
+                logging.info(f"# Fixtures: {len(current_fixtures)}")
+                fixtures_and_scores = []
+                for fixture in current_fixtures:
+                    score = create_score()
+                    fixtures_and_scores.append((fixture, score))
+                db_worker.add_results(fixtures_and_scores=fixtures_and_scores)
+            db_worker.advance_week()
+
     def run_season(self):
         logging.info("Simulate Season...")
         db_worker = DatabaseWorker(db_path=self._db_path)
         while True:
             current_week = db_worker.get_current_week()
+            week_db = db_worker.get_week(current_week)
 
             if current_week != WEEKS_IN_YEAR:
                 current_fixtures = db_worker.get_fixtures_for_current_week()
-                logging.info(
-                    f"Current Week: {current_week} # fixtures {len(current_fixtures)}"
+
+                text = f"{week_db}" + (
+                    f" # fixtures {len(current_fixtures)}" if current_fixtures else ""
                 )
+                logging.info(text)
+
                 if current_fixtures:
                     fixtures_and_scores = []
                     for fixture in current_fixtures:
@@ -835,17 +961,25 @@ class GameDBWorker:
                 db_worker.advance_week()
 
             else:
+                logging.info(f"{week_db}")
                 break
 
     def process_end_of_season(self):
         logging.info("Process End of Season...")
         db_worker = DatabaseWorker(db_path=self._db_path)
         current_season = db_worker.get_current_season()
-        leagues = db_worker.get_leagues_from_competitions()
-        for league in leagues:
+
+        for league in db_worker.get_leagues_from_competitions():
             league_data = get_league_table_data(league, current_season, db_worker)
-            text = league_table_text(league_data)
-            logging.info(f"{'\n'.join(text)}")
+            logging.info(f"{'\n'.join(league_table_text(league_data))}")
+
+        db_worker.do_post_season_setup()
+
+    def current_date(self):
+        db_worker = DatabaseWorker(db_path=self._db_path)
+        current_season = db_worker.get_current_season()
+        current_week = db_worker.get_week(db_worker.get_current_week())
+        return current_season, current_week
 
 
 def db_main():
@@ -861,8 +995,13 @@ def db_main():
         game_worker = GameDBWorker()
 
         game_worker.create_new_database(delete_existing=True)
-        game_worker.run_season()
-        game_worker.process_end_of_season()
+        count = 0
+        while count < 2:
+            game_worker.do_new_season()
+            game_worker.run_season()
+            game_worker.process_end_of_season()
+            sleep(5)
+            count += 1
 
         total_time = perf_counter() - start_time
         logging.info(f"Took {total_time:.6f} seconds")
