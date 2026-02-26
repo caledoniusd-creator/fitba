@@ -49,7 +49,6 @@ from .utils import create_session, create_tables
 class DatabaseWorker:
     def __init__(self, db_path: str):
         self._db_path = db_path
-
         self._session = None
 
     @property
@@ -68,6 +67,9 @@ class DatabaseWorker:
             self.session.scalars(select(SeasonDB).order_by(SeasonDB.year)).all()
         )
 
+    def get_world(self):
+        return self.session.scalars(select(WorldDB)).first()
+        
     def get_week(self, week_num: int):
         return self.session.scalars(
             select(WeekDB).where(WeekDB.week_num == week_num)
@@ -111,15 +113,6 @@ class DatabaseWorker:
             .all()
         )
 
-    def get_clubs_in_league_for_season(self, season: SeasonDB, league: LeagueDB):
-        clubs = self.session.scalars(
-            select(ClubDB)
-            .join(CompetitionRegisterDB, ClubDB.id == CompetitionRegisterDB.club_id)
-            .where(CompetitionRegisterDB.season_id == season.id)
-            .where(CompetitionRegisterDB.competition_id == league.id)
-        ).all()
-        return clubs
-
     def get_clubs_in_leagues_for_season(self, season: SeasonDB):
         league_ids = self.session.scalars(select(LeagueDB.id)).all()
         clubs = self.session.scalars(
@@ -129,12 +122,6 @@ class DatabaseWorker:
             .where(CompetitionRegisterDB.competition_id.in_(league_ids))
         ).all()
         return clubs
-
-    def get_current_league_clubs(self):
-        season = self.get_current_season()
-        if season:
-            return self.get_clubs_in_leagues_for_season(season)
-        return []
 
     def get_current_season(self):
         seasons = self.get_seasons()
@@ -164,25 +151,25 @@ class DatabaseWorker:
             world.current_week += 1
             self.session.commit()
 
-    def get_results_for_club_in_competition(
-        self, season: SeasonDB, competition: CompetitionDB, club: ClubDB
-    ):
-        return self.session.scalars(
-            select(ResultDB)
-            .join(FixtureDB, ResultDB.id == FixtureDB.id)
-            .options(selectinload(ResultDB.fixture))
-            .where(FixtureDB.season_id == season.id)
-            .where(FixtureDB.competition_id == competition.id)
-            .where(
-                (FixtureDB.home_club_id == club.id)
-                | (FixtureDB.away_club_id == club.id)
-            )
-        ).all()
+    # def get_results_for_club_in_competition(
+    #     self, season: SeasonDB, competition: CompetitionDB, club: ClubDB
+    # ):
+    #     return self.session.scalars(
+    #         select(ResultDB)
+    #         .join(FixtureDB, ResultDB.id == FixtureDB.id)
+    #         .options(selectinload(ResultDB.fixture))
+    #         .where(FixtureDB.season_id == season.id)
+    #         .where(FixtureDB.competition_id == competition.id)
+    #         .where(
+    #             (FixtureDB.home_club_id == club.id)
+    #             | (FixtureDB.away_club_id == club.id)
+    #         )
+    #     ).all()
 
-    def get_fixture_from_result(self, result: ResultDB):
-        return self.session.scalars(
-            select(FixtureDB).where(FixtureDB.id == result.id)
-        ).first()
+    # def get_fixture_from_result(self, result: ResultDB):
+    #     return self.session.scalars(
+    #         select(FixtureDB).where(FixtureDB.id == result.id)
+    #     ).first()
 
     def get_clubs_not_in_leagues_for_season(self, season: SeasonDB | None = None):
         season = season or self.get_current_season()
@@ -251,7 +238,6 @@ class DatabaseWorker:
 
     def get_club_details(self, club: ClubDB, season: SeasonDB):
 
-        
         # Get staff and players from contracts
         staff_contracts = self.session.scalars(
             select(ContractDB)
@@ -304,6 +290,7 @@ class DatabaseWorker:
         new_season = SeasonDB(year=year)
         self.session.add(new_season)
         self.session.commit()
+
 
         return new_season
 
@@ -385,12 +372,11 @@ class DatabaseWorker:
 
         world = None
         if current_season:
-            world = self.session.scalars(select(WorldDB)).all()
+            world = self.get_world()
             if not world:
                 world = WorldDB(season_id=current_season.id)
                 self.session.add(world)
             else:
-                world = world[0]
                 world.season_id = current_season.id
                 world.current_week = 1
             self.session.commit()

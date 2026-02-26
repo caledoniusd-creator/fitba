@@ -374,7 +374,7 @@ class WorldDB(Base):
     season_id: Mapped[int] = mapped_column(
         ForeignKey("seasons.id"),
     )
-    current_week: Mapped[int] = mapped_column(Integer, default=0)
+    current_week: Mapped[int] = mapped_column(Integer, default=1)
 
     # Reverse relationship
     season: Mapped[SeasonDB] = relationship("SeasonDB", back_populates="world")

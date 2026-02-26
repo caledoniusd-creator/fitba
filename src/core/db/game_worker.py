@@ -80,11 +80,10 @@ class GameDBWorker:
             db_worker.advance_week()
 
     def run_season(self):
-        logging.info("Simulate Season...")
         db_worker = DatabaseWorker(db_path=self._db_path)
+        current_season = db_worker.get_current_season()
+        logging.info(f"Simulating {current_season}....")
         while True:
-            current_season = db_worker.get_current_season()
-            logging.info(f"Season: {current_season}")
             current_week = db_worker.get_current_week()
             week_db = db_worker.get_week(current_week)
 

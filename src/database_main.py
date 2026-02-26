@@ -19,9 +19,11 @@ def db_main():
 
         game_worker = GameDBWorker()
 
+        max_seasons = 3
+        
         game_worker.create_new_database(delete_existing=True)
         count = 0
-        while count < 2:
+        while count < max_seasons:
             game_worker.do_new_season()
             game_worker.run_season()
             game_worker.process_end_of_season()
