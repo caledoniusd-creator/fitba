@@ -1,9 +1,12 @@
 
-core: Use DB instead of previous objects for game
+DB: use in memory db?
+DB: save to disk?
+
 core: Use Game States with New DB structure
 core: Create Match Simulator
 
-UI: Use new DB Structure
 
 Done:
 UI: Auto run to end of season!
+core: Use DB instead of previous objects for game
+UI: Use new DB Structure
