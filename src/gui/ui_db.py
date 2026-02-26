@@ -11,7 +11,7 @@ from .utils import set_white_bg
 from .generic_widgets import BusyPage
 
 
-from src.database_main import GameDBWorker
+from src.core.db.game_worker import GameDBWorker
 
 
 class DBObject(QObject):

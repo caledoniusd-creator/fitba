@@ -165,17 +165,20 @@ class ClubDB(Base):
         if season is None:
             return [reg.competition for reg in self.competition_registrations]
         else:
-            return [reg.competition for reg in self.competition_registrations if reg.season == season]
+            return [reg.competition for reg in self.competition_registrations if reg.season_id == season.id]
     
     def fixtures(self, season=None):
         all_fixtures = self.home_fixtures + self.away_fixtures
         if season is not None:
-            all_fixtures = [f for f in all_fixtures if f.season == season]
+            all_fixtures = [f for f in all_fixtures if f.season_id == season.id]
         all_fixtures.sort(key=lambda f: f.season_week)
         return all_fixtures
     
-    def results(self, season=None):
-        return [f.result for f in self.fixtures(season) if f.result is not None]
+    def results(self, competition=None, season=None):
+        all_results = [f.result for f in self.fixtures(season) if f.result is not None]
+        if competition is not None:
+            all_results = [r for r in all_results if r.fixture.competition_id == competition.id]
+        return all_results
     
 
 class ContractDB(Base):
@@ -223,6 +226,15 @@ class CompetitionDB(Base):
     __mapper_args__ = {
         "polymorphic_on": "competition_type",
     }
+
+    def get_clubs_for_season(self, season: SeasonDB):
+        all_registrations = self.competition_registrations
+        clubs = []
+        for reg in all_registrations:
+            if reg.season_id == season.id:
+                clubs.append(reg.club)  
+        return clubs
+    
 
 
 class LeagueGroupDB(Base):
