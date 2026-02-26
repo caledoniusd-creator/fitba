@@ -153,33 +153,40 @@ class ClubDB(Base):
         return [c.person.staff for c in self.contracts if c.person.staff is not None]
 
     def player_contracts(self):
-        return [c for c in self.contracts if c.person.player is not None]   
-    
+        return [c for c in self.contracts if c.person.player is not None]
+
     def players(self):
-        all_players = [c.person.player for c in self.contracts if c.person.player is not None]
+        all_players = [
+            c.person.player for c in self.contracts if c.person.player is not None
+        ]
         all_players.sort(key=lambda p: (p.position.value[0], -p.ability), reverse=False)
         return all_players
-    
-    
+
     def competitions(self, season=None):
         if season is None:
             return [reg.competition for reg in self.competition_registrations]
         else:
-            return [reg.competition for reg in self.competition_registrations if reg.season_id == season.id]
-    
+            return [
+                reg.competition
+                for reg in self.competition_registrations
+                if reg.season_id == season.id
+            ]
+
     def fixtures(self, season=None):
         all_fixtures = self.home_fixtures + self.away_fixtures
         if season is not None:
             all_fixtures = [f for f in all_fixtures if f.season_id == season.id]
         all_fixtures.sort(key=lambda f: f.season_week)
         return all_fixtures
-    
+
     def results(self, competition=None, season=None):
         all_results = [f.result for f in self.fixtures(season) if f.result is not None]
         if competition is not None:
-            all_results = [r for r in all_results if r.fixture.competition_id == competition.id]
+            all_results = [
+                r for r in all_results if r.fixture.competition_id == competition.id
+            ]
         return all_results
-    
+
 
 class ContractDB(Base):
     __tablename__ = "contracts"
@@ -232,9 +239,8 @@ class CompetitionDB(Base):
         clubs = []
         for reg in all_registrations:
             if reg.season_id == season.id:
-                clubs.append(reg.club)  
+                clubs.append(reg.club)
         return clubs
-    
 
 
 class LeagueGroupDB(Base):

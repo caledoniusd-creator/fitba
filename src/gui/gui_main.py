@@ -16,7 +16,6 @@ from .mainmenuview import MainMenuView
 from .game_views import GameView
 
 
-
 @unique
 class AppState(Enum):
     MainMenu = auto()

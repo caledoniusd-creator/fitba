@@ -11,10 +11,7 @@ from .utils import set_white_bg
 from .generic_widgets import BusyPage
 
 
-from src.core.db.models import (
-    SeasonDB,
-    LeagueDB
-)
+from src.core.db.models import SeasonDB, LeagueDB
 from src.core.db.league_db_functions import get_league_table_data
 
 from src.core.db.game_worker import GameDBWorker
@@ -54,7 +51,7 @@ class TitledTreeWidget(QFrame):
         self.setAutoFillBackground(True)
 
         self._tree = QTreeWidget(self)
-    
+
         layout = QVBoxLayout(self)
         layout.addWidget(TitleLabel(title, 12), 0, Qt.AlignTop | Qt.AlignHCenter)
         layout.addWidget(self._tree, 100)
@@ -62,7 +59,7 @@ class TitledTreeWidget(QFrame):
     @property
     def tree(self):
         return self._tree
-    
+
     def clear(self):
         self._tree.clear()
 
@@ -74,7 +71,7 @@ class TitledListWidget(QFrame):
         self.setAutoFillBackground(True)
 
         self._list_widget = QListWidget(self)
-    
+
         layout = QVBoxLayout(self)
         layout.addWidget(TitleLabel(title, 12), 0, Qt.AlignTop | Qt.AlignHCenter)
         layout.addWidget(self._list_widget, 100)
@@ -82,27 +79,30 @@ class TitledListWidget(QFrame):
     @property
     def list_widget(self):
         return self._list_widget
-    
+
     def clear(self):
         self._list_widget.clear()
-
 
 
 class StaffTreeWidget(TitledTreeWidget):
     def __init__(self, parent=None):
         super().__init__(title="Staff", parent=parent)
-        self.tree.setHeaderLabels(["Role", "Name", "Ability", "Reputation", "Personality"])
+        self.tree.setHeaderLabels(
+            ["Role", "Name", "Ability", "Reputation", "Personality"]
+        )
 
     def set_staff(self, staff_list):
         self.tree.clear()
         for staff in staff_list:
-            item = QTreeWidgetItem([
-                staff.role.name,
-                staff.person.full_name,
-                str(staff.ability),
-                staff.reputation_type.name,
-                staff.person.personality.name
-            ])
+            item = QTreeWidgetItem(
+                [
+                    staff.role.name,
+                    staff.person.full_name,
+                    str(staff.ability),
+                    staff.reputation_type.name,
+                    staff.person.personality.name,
+                ]
+            )
             self.tree.addTopLevelItem(item)
 
 
@@ -114,12 +114,14 @@ class PlayerTreeWidget(TitledTreeWidget):
     def set_players(self, player_list):
         self.tree.clear()
         for player in player_list:
-            item = QTreeWidgetItem([
-                player.position.name,
-                player.person.full_name,
-                str(player.ability),
-                player.person.personality.name
-            ])
+            item = QTreeWidgetItem(
+                [
+                    player.position.name,
+                    player.person.full_name,
+                    str(player.ability),
+                    player.person.personality.name,
+                ]
+            )
             self.tree.addTopLevelItem(item)
 
 
@@ -136,14 +138,12 @@ class CompetitionListWidget(TitledListWidget):
 
 
 class ClubWidget(QWidget):
-    
     DEFAULT_TITLE = "No club selected"
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         self._club = None
         self.setAutoFillBackground(True)
-
 
         self._title = TitleLabel(ClubWidget.DEFAULT_TITLE)
 
@@ -162,7 +162,6 @@ class ClubWidget(QWidget):
         person_layout.addLayout(left_layout)
         person_layout.addWidget(self._player_list)
 
-    
         layout = QVBoxLayout(self)
         layout.addWidget(self._title, 0, Qt.AlignTop | Qt.AlignHCenter)
         layout.addWidget(person_frame, 100)
@@ -172,19 +171,18 @@ class ClubWidget(QWidget):
     @property
     def club(self):
         return self._club
-    
+
     @club.setter
     def club(self, club):
         self._club = club
         self.invalidate()
 
     def invalidate(self):
-        if self ._club is not None:
+        if self._club is not None:
             self._title.setText(f"{self._club.name}")
             self._staff_list.set_staff(self._club.staff_members())
             self._player_list.set_players(self._club.players())
             self._comp_list.set_competitions(self._club.competitions())
-
 
         else:
             self._title.setText(ClubWidget.DEFAULT_TITLE)
@@ -206,8 +204,7 @@ class ClubView(QWidget):
 
         layout = QHBoxLayout(self)
         layout.addWidget(self._club_List, 0, Qt.AlignTop | Qt.AlignLeft)
-        layout.addWidget(self._club_view, 100)   
-        
+        layout.addWidget(self._club_view, 100)
 
     def set_club(self, club):
         self._club = club
@@ -224,18 +221,18 @@ class ClubView(QWidget):
             self._club_List.clear()
             self._club = None
 
-
-    def on_club_changed(self, current: QListWidgetItem | None, previous: QListWidgetItem | None):
+    def on_club_changed(
+        self, current: QListWidgetItem | None, previous: QListWidgetItem | None
+    ):
         print("Club changed !")
         if current is not None:
             club = current.data(Qt.UserRole)
-           
+
             self.set_club(club)
             self._club_view.club = self._club
         else:
             self.set_club(None)
             self._club_view.club = None
-
 
 
 class LeagueView(QFrame):
@@ -253,16 +250,26 @@ class LeagueView(QFrame):
 
     def set_league(self, league: LeagueDB, season: SeasonDB):
         self.title.setText(league.name)
-        
+
         table_data = get_league_table_data(league, season)
         self.tree_widget.clear()
-        self.tree_widget.setHeaderLabels(["Pos", "Club", "Ply", "W", "D", "L", "GF", "GA", "GD", "Pts"])
+        self.tree_widget.setHeaderLabels(
+            ["Pos", "Club", "Ply", "W", "D", "L", "GF", "GA", "GD", "Pts"]
+        )
         for ix, d in enumerate(table_data):
             pos = ix + 1
             item = QTreeWidgetItem(
                 [
-                    str(pos), d["club"].name, str(d["ply"]), str(d["w"]), str(d["d"]), str(d["l"]),
-                    str(d["gf"]), str(d["ga"]), str(d["gd"]), str(d["pts"])
+                    str(pos),
+                    d["club"].name,
+                    str(d["ply"]),
+                    str(d["w"]),
+                    str(d["d"]),
+                    str(d["l"]),
+                    str(d["gf"]),
+                    str(d["ga"]),
+                    str(d["gd"]),
+                    str(d["pts"]),
                 ]
             )
             self.tree_widget.addTopLevelItem(item)
@@ -290,7 +297,6 @@ class HomePage(QFrame):
         layout = QVBoxLayout(self)
         layout.addLayout(league_layout)
 
-
     def invalidate(self):
         pass
 
@@ -312,7 +318,6 @@ class DBMainGameView(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         self.setAutoFillBackground(True)
-
 
         self.tabView = QTabWidget()
 
@@ -337,14 +342,11 @@ class DBMainGameView(QWidget):
 
         self._club_list = QListView()
         self._comp_list = QListView()
-   
 
         list_widgets = QWidget()
         list_layout = QHBoxLayout(list_widgets)
         list_layout.addWidget(self._club_list)
         list_layout.addWidget(self._comp_list)
-
-
 
         self.tabView.addTab(self.home_view, "Home")
         self.tabView.addTab(self._club_view, "Clubs")
@@ -355,7 +357,6 @@ class DBMainGameView(QWidget):
         layout = QVBoxLayout(self)
         layout.addLayout(top_layout)
         layout.addWidget(self.tabView, 100)
-
 
         set_white_bg(self)
 
@@ -388,7 +389,6 @@ class DBMainGameView(QWidget):
             ]
             self._comp_list.setModel(QStringListModel(comps))
 
-
             leagues = self._db_worker.db_worker.worker.get_leagues()
             if len(leagues) > 1:
                 self.home_view.set_league_1(leagues[0], season)
@@ -412,6 +412,7 @@ class DBMainMenuView(QWidget):
     """
     Main Menu View
     """
+
     new_game = Signal(name="new_game")
     continue_game = Signal(name="continue_game")
     load_game = Signal(name="load_game")
@@ -464,6 +465,7 @@ class MainView(QStackedWidget):
     """
     Main App View
     """
+
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         self.setAutoFillBackground(True)

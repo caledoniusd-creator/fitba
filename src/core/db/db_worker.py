@@ -2,11 +2,6 @@ from __future__ import annotations
 import logging
 from random import shuffle, randint
 from sqlalchemy import select, desc, asc
-from sqlalchemy.orm import selectinload
-from time import perf_counter, sleep
-from traceback import format_exc
-from typing import List
-from core import leagues
 from src.core.game_types import (
     WeekType,
     ReputationLevel,
@@ -42,7 +37,11 @@ from src.core.db.models import (
 
 from src.core.utils import timer
 
-from .league_db_functions import league_30_fixtures, create_league_fixtures, get_league_table_data
+from .league_db_functions import (
+    league_30_fixtures,
+    create_league_fixtures,
+    get_league_table_data,
+)
 from .utils import create_session, create_tables
 
 
@@ -56,36 +55,34 @@ class DatabaseWorker:
         if self._session is None:
             self._session = create_session(self._db_path)
         return self._session
-    
+
     def close_session(self):
         if self._session:
             self._session.close()
             self._session = None
 
     def get_seasons(self):
-        return (
-            self.session.scalars(select(SeasonDB).order_by(asc(SeasonDB.year))).all()
-        )
-    
+        return self.session.scalars(select(SeasonDB).order_by(asc(SeasonDB.year))).all()
+
     def get_current_season(self):
-        return (
-            self.session.scalars(select(SeasonDB).order_by(desc(SeasonDB.year))).first()
-        )
+        return self.session.scalars(
+            select(SeasonDB).order_by(desc(SeasonDB.year))
+        ).first()
 
     def get_world(self):
         return self.session.scalars(select(WorldDB)).first()
-        
+
     def get_week(self, week_num: int):
         return self.session.scalars(
             select(WeekDB).where(WeekDB.week_num == week_num)
         ).first()
-    
+
     def get_current_week(self):
         world = self.get_world()
         if world:
             return world.current_week
         return None
-    
+
     def advance_week(self):
         world = self.get_world()
         if world:
@@ -94,7 +91,7 @@ class DatabaseWorker:
 
     def get_clubs(self):
         return self.session.scalars(select(ClubDB)).all()
-    
+
     def get_competitions(self):
         return self.session.scalars(select(CompetitionDB)).all()
 
@@ -122,10 +119,10 @@ class DatabaseWorker:
 
     def get_compition_registrations(self, season: SeasonDB):
         return self.session.scalars(
-                select(CompetitionRegisterDB).where(
-                    CompetitionRegisterDB.season_id == season.id
-                )
-            ).all()
+            select(CompetitionRegisterDB).where(
+                CompetitionRegisterDB.season_id == season.id
+            )
+        ).all()
 
     def get_fixtures_for_current_week(self):
         world = self.session.scalars(select(WorldDB)).first()
@@ -214,7 +211,9 @@ class DatabaseWorker:
         return new_season
 
     def add_result(self, fixture, score):
-        self.session.add(ResultDB(id=fixture.id, home_score=score[0], away_score=score[1]))
+        self.session.add(
+            ResultDB(id=fixture.id, home_score=score[0], away_score=score[1])
+        )
         self.session.commit()
 
     def add_results(self, fixtures_and_scores):
@@ -255,7 +254,8 @@ class DatabaseWorker:
                     season_id=next_season.id,
                     competition_id=reg[1],
                     club_id=reg[0],
-                ))
+                )
+            )
 
         if new_regs:
             self.session.add_all(new_regs)
@@ -298,7 +298,7 @@ class DatabaseWorker:
                 world.current_week = 1
             self.session.commit()
 
-         # get all leagues
+        # get all leagues
         for league in self.session.scalars(select(LeagueDB)).all():
             logging.info(f"Create fixtures for {league}")
 
@@ -318,11 +318,13 @@ class DatabaseWorker:
                         season_week=league_30_fixtures[ix],
                     )
                     fixture_objects.append(fixture)
-                    
+
             self.session.add_all(fixture_objects)
             self.session.commit()
 
-            logging.info(f"#Num Rounds {len(fixtures)} #Num Fixtures: {sum([len(f) for f in fixtures])}")
+            logging.info(
+                f"#Num Rounds {len(fixtures)} #Num Fixtures: {sum([len(f) for f in fixtures])}"
+            )
 
 
 def contract_expiry():
