@@ -1,7 +1,9 @@
 from __future__ import annotations
 import logging
-from random import shuffle, randint
+from random import shuffle, randint, seed as rnd_seed
 from sqlalchemy import select, desc, asc
+
+from src.core.utils import random_seed
 from src.core.game_types import (
     WeekType,
     ReputationLevel,
@@ -125,15 +127,34 @@ class DatabaseWorker:
         ).all()
 
     def get_fixtures_for_current_week(self):
-        world = self.session.scalars(select(WorldDB)).first()
+        
+        world = self.get_world()
         if world:
+            logging.info(f"Get Fixtures for week: {world.current_week}")
             return self.session.scalars(
                 select(FixtureDB)
                 .where(FixtureDB.season_id == world.season_id)
                 .where(FixtureDB.season_week == world.current_week)
+                .where(FixtureDB.result == None)
             ).all()
         return []
 
+    def get_results_for_current_week(self):
+
+        world = self.get_world()
+        if world:
+            logging.info(f"Get Fixtures for week: {world.current_week}")
+            fixtures = self.session.scalars(
+                select(FixtureDB)
+                .where(FixtureDB.season_id == world.season_id)
+                .where(FixtureDB.season_week == world.current_week)
+                .where(FixtureDB.result != None)
+            ).all()
+
+            return [f.result for f in fixtures]
+            
+        return []
+    
     def get_clubs_not_in_leagues_for_season(self, season: SeasonDB | None = None):
         season = season or self.get_current_season()
         league_ids = self.session.scalars(select(LeagueDB.id)).all()
@@ -211,19 +232,19 @@ class DatabaseWorker:
         return new_season
 
     def add_result(self, fixture, score):
-        self.session.add(
-            ResultDB(id=fixture.id, home_score=score[0], away_score=score[1])
-        )
+        result = ResultDB(id=fixture.id, home_score=score[0], away_score=score[1])
+        self.session.add(result)
         self.session.commit()
+        return result
 
     def add_results(self, fixtures_and_scores):
-        self.session.add_all(
-            [
-                ResultDB(id=fs[0].id, home_score=fs[1][0], away_score=fs[1][1])
-                for fs in fixtures_and_scores
-            ]
-        )
+        all_results = [
+            ResultDB(id=fs[0].id, home_score=fs[1][0], away_score=fs[1][1])
+            for fs in fixtures_and_scores
+        ]
+        self.session.add_all(all_results)
         self.session.commit()
+        return all_results
 
     # @timer
     def do_post_season_setup(self):
@@ -287,16 +308,13 @@ class DatabaseWorker:
         logging.info("New Season Setup...")
 
         current_season = self.get_current_season()
-        world = None
-        if current_season:
-            world = self.get_world()
-            if not world:
-                world = WorldDB(season_id=current_season.id)
-                self.session.add(world)
-            else:
-                world.season_id = current_season.id
-                world.current_week = 1
+        world = self.get_world()
+        if current_season and world:
+            world.season_id = current_season.id
+            world.current_week = 1
             self.session.commit()
+        else:
+            raise RuntimeError(f"Expected World({world}) and season({current_season})")
 
         # get all leagues
         for league in self.session.scalars(select(LeagueDB)).all():
@@ -332,9 +350,13 @@ def contract_expiry():
 
 
 class DatabaseCreator(DatabaseWorker):
+    """
+    Database setup worker
+    """
     def __init__(self, db_path: str, delete_existing: bool = True):
         super().__init__(db_path=db_path)
         self._delete_existsing = delete_existing
+        self._game_seed = random_seed()
 
     def _pre_populate_db(self):
         logging.info("Pre-populate DB with static data")
@@ -360,12 +382,19 @@ class DatabaseCreator(DatabaseWorker):
 
     @timer
     def create_db(self):
+        self._game_seed = random_seed()
         logging.info(
-            f"Create New Database '{self._db_path}', delete existing: {self._delete_existsing}"
+            f"Create New Database '{self._db_path}', delete existing: {self._delete_existsing}, seed:{hex(self._game_seed)}"
         )
         create_tables(self._db_path, self._delete_existsing)
 
         self._pre_populate_db()
+
+        rnd_seed(self._game_seed)
+
+        world = WorldDB(game_seed=self._game_seed)
+        self.session.add(world)
+        self.session.commit()
 
         self._create_db_competitions()
         num_clubs = self._create_db_clubs()

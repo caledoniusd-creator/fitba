@@ -1,4 +1,6 @@
 from functools import wraps
+from random import randint
+from sys import maxsize
 from time import perf_counter
 
 import logging
@@ -14,3 +16,7 @@ def timer(func):
         return result
 
     return wrapper
+
+
+def random_seed():
+    return randint(0, maxsize)
