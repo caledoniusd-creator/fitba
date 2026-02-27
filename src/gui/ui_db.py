@@ -17,6 +17,18 @@ from src.core.db.league_db_functions import get_league_table_data
 from src.core.db.game_worker import GameDBWorker
 
 
+from src.gui.db_widgets.generic_widgets import TitleLabel
+
+from src.gui.db_widgets.object_views import (
+    StaffTreeWidget,
+    PlayerTreeWidget,
+    CompetitionListWidget
+)
+
+from src.gui.db_widgets.league_views import LeagueView
+from src.gui.db_widgets.club_widget import ClubWidget
+
+
 class DBObject(QObject):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -34,161 +46,6 @@ class DBObject(QObject):
 
     def current_date(self):
         return self.db_worker.current_date()
-
-
-class TitleLabel(QLabel):
-    def __init__(self, title: str, size: int = 16, parent=None):
-        super().__init__(parent=parent)
-        self.setText(title)
-        self.setAlignment(Qt.AlignCenter)
-        self.setFont(QFont("DejaVu Sans", size, QFont.Bold))
-
-
-class TitledTreeWidget(QFrame):
-    def __init__(self, title: str, parent=None):
-        super().__init__(parent=parent)
-        self.setFrameStyle(QFrame.StyledPanel | QFrame.Plain)
-        self.setAutoFillBackground(True)
-
-        self._tree = QTreeWidget(self)
-
-        layout = QVBoxLayout(self)
-        layout.addWidget(TitleLabel(title, 12), 0, Qt.AlignTop | Qt.AlignHCenter)
-        layout.addWidget(self._tree, 100)
-
-    @property
-    def tree(self):
-        return self._tree
-
-    def clear(self):
-        self._tree.clear()
-
-
-class TitledListWidget(QFrame):
-    def __init__(self, title: str, parent=None):
-        super().__init__(parent=parent)
-        self.setFrameStyle(QFrame.StyledPanel | QFrame.Plain)
-        self.setAutoFillBackground(True)
-
-        self._list_widget = QListWidget(self)
-
-        layout = QVBoxLayout(self)
-        layout.addWidget(TitleLabel(title, 12), 0, Qt.AlignTop | Qt.AlignHCenter)
-        layout.addWidget(self._list_widget, 100)
-
-    @property
-    def list_widget(self):
-        return self._list_widget
-
-    def clear(self):
-        self._list_widget.clear()
-
-
-class StaffTreeWidget(TitledTreeWidget):
-    def __init__(self, parent=None):
-        super().__init__(title="Staff", parent=parent)
-        self.tree.setHeaderLabels(
-            ["Role", "Name", "Ability", "Reputation", "Personality"]
-        )
-
-    def set_staff(self, staff_list):
-        self.tree.clear()
-        for staff in staff_list:
-            item = QTreeWidgetItem(
-                [
-                    staff.role.name,
-                    staff.person.full_name,
-                    str(staff.ability),
-                    staff.reputation_type.name,
-                    staff.person.personality.name,
-                ]
-            )
-            self.tree.addTopLevelItem(item)
-
-
-class PlayerTreeWidget(TitledTreeWidget):
-    def __init__(self, parent=None):
-        super().__init__(title="Players", parent=parent)
-        self.tree.setHeaderLabels(["Position", "Name", "Ability", "Personality"])
-
-    def set_players(self, player_list):
-        self.tree.clear()
-        for player in player_list:
-            item = QTreeWidgetItem(
-                [
-                    player.position.name,
-                    player.person.full_name,
-                    str(player.ability),
-                    player.person.personality.name,
-                ]
-            )
-            self.tree.addTopLevelItem(item)
-
-
-class CompetitionListWidget(TitledListWidget):
-    def __init__(self, parent=None):
-        super().__init__(title="Competitions", parent=parent)
-
-    def set_competitions(self, comp_list):
-        self.list_widget.clear()
-        for comp in comp_list:
-            item = QListWidgetItem(comp.name)
-            item.setData(Qt.UserRole, comp)
-            self.list_widget.addItem(item)
-
-
-class ClubWidget(QWidget):
-    DEFAULT_TITLE = "No club selected"
-
-    def __init__(self, parent=None):
-        super().__init__(parent=parent)
-        self._club = None
-        self.setAutoFillBackground(True)
-
-        self._title = TitleLabel(ClubWidget.DEFAULT_TITLE)
-
-        self._staff_list = StaffTreeWidget()
-        self._player_list = PlayerTreeWidget()
-        self._comp_list = CompetitionListWidget()
-
-        person_frame = QFrame()
-        person_frame.setFrameStyle(QFrame.StyledPanel | QFrame.Plain)
-
-        left_layout = QVBoxLayout()
-        left_layout.addWidget(self._staff_list)
-        left_layout.addWidget(self._comp_list)
-
-        person_layout = QHBoxLayout(person_frame)
-        person_layout.addLayout(left_layout)
-        person_layout.addWidget(self._player_list)
-
-        layout = QVBoxLayout(self)
-        layout.addWidget(self._title, 0, Qt.AlignTop | Qt.AlignHCenter)
-        layout.addWidget(person_frame, 100)
-
-        self.invalidate()
-
-    @property
-    def club(self):
-        return self._club
-
-    @club.setter
-    def club(self, club):
-        self._club = club
-        self.invalidate()
-
-    def invalidate(self):
-        if self._club is not None:
-            self._title.setText(f"{self._club.name}")
-            self._staff_list.set_staff(self._club.staff_members())
-            self._player_list.set_players(self._club.players())
-            self._comp_list.set_competitions(self._club.competitions())
-
-        else:
-            self._title.setText(ClubWidget.DEFAULT_TITLE)
-            self._staff_list.clear()
-            self._player_list.clear()
-            self._comp_list.clear()
 
 
 class ClubView(QWidget):
@@ -233,53 +90,6 @@ class ClubView(QWidget):
         else:
             self.set_club(None)
             self._club_view.club = None
-
-
-class LeagueView(QFrame):
-    def __init__(self, parent=None):
-        super().__init__(parent=parent)
-        self.setFrameStyle(QFrame.StyledPanel | QFrame.Plain)
-
-        self.title = TitleLabel("", 12)
-        self.tree_widget = QTreeWidget()
-        self.tree_widget.setFont(QFont("DejaVu Sans", 12))
-
-        layout = QVBoxLayout(self)
-        layout.addWidget(self.title, 0, Qt.AlignHCenter | Qt.AlignTop)
-        layout.addWidget(self.tree_widget, 100)
-
-    def set_league(self, league: LeagueDB, season: SeasonDB):
-        self.title.setText(league.name)
-
-        table_data = get_league_table_data(league, season)
-        self.tree_widget.clear()
-        self.tree_widget.setHeaderLabels(
-            ["Pos", "Club", "Ply", "W", "D", "L", "GF", "GA", "GD", "Pts"]
-        )
-        for ix, d in enumerate(table_data):
-            pos = ix + 1
-            item = QTreeWidgetItem(
-                [
-                    str(pos),
-                    d["club"].name,
-                    str(d["ply"]),
-                    str(d["w"]),
-                    str(d["d"]),
-                    str(d["l"]),
-                    str(d["gf"]),
-                    str(d["ga"]),
-                    str(d["gd"]),
-                    str(d["pts"]),
-                ]
-            )
-            self.tree_widget.addTopLevelItem(item)
-
-        for c in range(self.tree_widget.columnCount()):
-            self.tree_widget.resizeColumnToContents(c)
-
-    def clear(self):
-        self.title.clear()
-        self.tree_widget.clear()
 
 
 class HomePage(QFrame):
@@ -461,6 +271,16 @@ class DBMainMenuView(QWidget):
             self.btn_continue_game.setEnabled(can_continue)
 
 
+
+class LogWindow(QTextEdit):
+
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
+        self.setWindowFlags(Qt.Tool)
+        self.setReadOnly(True)
+        self.setMinimumSize(256, 96)
+        
+
 class MainView(QStackedWidget):
     """
     Main App View
@@ -473,6 +293,15 @@ class MainView(QStackedWidget):
 
         self.setMinimumSize(1920, 1080)
         self.setWindowTitle("Fitba DB GUI")
+
+        self._log_window = LogWindow(self)
+        self._log_window.setVisible(False)
+        
+        self._log_toggle_action = QAction()
+        self._log_toggle_action.setShortcut(QKeySequence(Qt.Key_F1))
+        self._log_toggle_action.setShortcutContext(Qt.ApplicationShortcut)
+        self._log_toggle_action.triggered.connect(self.toggle_log_window)
+        self.addAction(self._log_toggle_action)
 
         self._views = {
             "busy": BusyPage(),
@@ -493,6 +322,7 @@ class MainView(QStackedWidget):
         self.setCurrentWidget(self._views["main_menu"])
 
         self._game_worker = DBObject()
+        self.grabKeyboard()
 
     def run_thread_function(self, funct: callable, on_done: callable, message=""):
         self.set_busy(message)
@@ -555,6 +385,9 @@ class MainView(QStackedWidget):
     def on_advanced_game_done(self):
         print("Game advanced !")
         self.on_show_game_view()
+
+    def toggle_log_window(self):
+        self._log_window.setVisible(not self._log_window.isVisible())
 
 
 class GUIDBApplication(QApplication):
