@@ -9,14 +9,20 @@ from PySide6.QtWidgets import *
 
 
 class TitleLabel(QLabel):
-    def __init__(self, title: str, size: int = 16, parent=None):
+    """
+    Simple Label to act as title
+    """
+    def __init__(self, title: str|None=None, size: int = 16, parent=None):
         super().__init__(parent=parent)
-        self.setText(title)
+        self.setText(title if title else "N/A")
         self.setAlignment(Qt.AlignCenter)
         self.setFont(QFont("DejaVu Sans", size, QFont.Bold))
 
 
 class TitledTreeWidget(QFrame):
+    """
+    Tree Widget with Title Label
+    """
     def __init__(self, title: str, parent=None):
         super().__init__(parent=parent)
         self.setFrameStyle(QFrame.StyledPanel | QFrame.Plain)
@@ -37,6 +43,10 @@ class TitledTreeWidget(QFrame):
 
 
 class TitledListWidget(QFrame):
+    """
+    List Widget with Title Label
+    """
+
     def __init__(self, title: str, parent=None):
         super().__init__(parent=parent)
         self.setFrameStyle(QFrame.StyledPanel | QFrame.Plain)
