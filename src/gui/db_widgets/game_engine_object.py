@@ -1,6 +1,3 @@
-
-
-from PySide6.QtCore import Qt
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
@@ -10,7 +7,6 @@ from src.core.db.game_worker import WorldState, WorldStateEngine
 
 
 class GameEngineObject(QObject):
-
     state_engine_changed = Signal()
     game_advanced = Signal()
 
@@ -60,16 +56,16 @@ class GameEngineObject(QObject):
     @property
     def is_active(self):
         return self._state_engine is not None
-    
+
     def current_fixtures(self):
         if not self._state_engine:
             raise RuntimeError("No State Engine to get current fixtures")
-        
+
         return self._state_engine.game_worker.current_fixtures()
-    
+
     def current_result_fixtures(self):
         if not self._state_engine:
             raise RuntimeError("No State Engine to get current result")
-        
+
         results = self._state_engine.game_worker.current_results()
         return [r.fixture for r in results]

@@ -5,11 +5,8 @@ from PySide6.QtWidgets import *
 
 
 from .generic_widgets import TitleLabel
-from .object_views import (
-    StaffTreeWidget,
-    PlayerTreeWidget,
-    CompetitionListWidget
-)
+from .object_views import StaffTreeWidget, PlayerTreeWidget, CompetitionListWidget
+
 
 class ClubWidget(QWidget):
     DEFAULT_TITLE = "No club selected"

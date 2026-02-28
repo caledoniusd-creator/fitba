@@ -8,8 +8,6 @@ from traceback import format_exc
 from src.core.db.game_worker import GameDBWorker, WorldState, WorldStateEngine
 
 
-
-
 def old_db_test_run():
     game_worker = GameDBWorker()
 
@@ -37,19 +35,16 @@ def game_state_engine(seasons: int = 3):
         sleep(1)
         state_engine.advance_game()
 
-    
 
 def game_with_state_engine_test_run():
     state_engine = WorldStateEngine()
 
     while True:
-
         if state_engine.state == WorldState.AwaitingContinue:
             date_text = f"{state_engine.world_time[0]} {state_engine.world_time[1]}"
         else:
             date_text = "n/a"
-            
-            
+
         logging.info(f"Game State: {state_engine.state.name} - {date_text}")
 
         if state_engine.state == WorldState.PreFixtures:
@@ -91,9 +86,8 @@ def game_with_state_engine_test_run():
             state_engine.advance_to_post_season()
 
         else:
-            logging.info(f"Advance!")
+            logging.info("Advance!")
             state_engine.advance_game()
-
 
 
 def db_main():
@@ -109,7 +103,6 @@ def db_main():
         # old_db_test_run()
         game_state_engine(seasons=3)
         # game_with_state_engine_test_run()
-
 
         total_time = perf_counter() - start_time
         logging.info(f"Took {total_time:.6f} seconds")

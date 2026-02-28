@@ -4,9 +4,7 @@ import logging
 from random import randint
 
 
-
 from src.core.world_time import WEEKS_IN_YEAR
-from src.core.utils import random_seed
 
 from .league_db_functions import get_league_table_data
 from .db_worker import DatabaseWorker, DatabaseCreator
@@ -35,7 +33,6 @@ def league_table_text(league_data):
         league_table_text.append(f"{'|'.join(text)}")
     league_table_text.append(("-" * 80))
     return league_table_text
-
 
 
 class GameDBWorker:
@@ -134,7 +131,6 @@ class GameDBWorker:
 
     def current_results(self):
         return self.worker.get_results_for_current_week()
-    
 
 
 @unique
@@ -184,10 +180,12 @@ class WorldStateEngine:
         if not current_fixtures:
             logging.warning("Processing fixtures for no fixtures?")
             return
-        
+
         logging.info(f"Processing {len(current_fixtures)} fixtures")
         self._results = self.game_worker.worker.add_results(
-            fixtures_and_scores=[(fixture, create_score()) for fixture in current_fixtures]
+            fixtures_and_scores=[
+                (fixture, create_score()) for fixture in current_fixtures
+            ]
         )
 
     def _process_state(self):
@@ -255,6 +253,7 @@ class WorldStateEngine:
         current_week = self.world_time[1].week_num
         logging.info(f"Advancing to new week current week: {current_week}")
         while (
-            self.state != WorldState.PostSeason and current_week == self.world_time[1].week_num
+            self.state != WorldState.PostSeason
+            and current_week == self.world_time[1].week_num
         ):
             self.advance_game()

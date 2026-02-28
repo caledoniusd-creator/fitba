@@ -1,18 +1,15 @@
-
-
 from PySide6.QtCore import Qt
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
 
-
-
 class TitleLabel(QLabel):
     """
     Simple Label to act as title
     """
-    def __init__(self, title: str|None=None, size: int = 16, parent=None):
+
+    def __init__(self, title: str | None = None, size: int = 16, parent=None):
         super().__init__(parent=parent)
         self.setText(title if title else "N/A")
         self.setAlignment(Qt.AlignCenter)
@@ -23,6 +20,7 @@ class TitledTreeWidget(QFrame):
     """
     Tree Widget with Title Label
     """
+
     def __init__(self, title: str, parent=None):
         super().__init__(parent=parent)
         self.setFrameStyle(QFrame.StyledPanel | QFrame.Plain)

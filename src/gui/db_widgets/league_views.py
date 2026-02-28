@@ -1,19 +1,15 @@
-
-
 from PySide6.QtCore import Qt
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
 
-from src.core.db.models import (
-    SeasonDB,
-    LeagueDB
-)
+from src.core.db.models import SeasonDB, LeagueDB
 from src.core.db.league_db_functions import get_league_table_data
 
 
 from .generic_widgets import TitleLabel
+
 
 class LeagueView(QFrame):
     def __init__(self, parent=None):

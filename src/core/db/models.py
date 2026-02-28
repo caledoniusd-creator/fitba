@@ -378,9 +378,7 @@ class WorldDB(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     season_id: Mapped[int] = mapped_column(
-        ForeignKey("seasons.id"),
-        nullable=True,
-        default=None
+        ForeignKey("seasons.id"), nullable=True, default=None
     )
     current_week: Mapped[int] = mapped_column(Integer, default=1)
     game_seed: Mapped[int] = mapped_column(Integer, nullable=False, default=1)

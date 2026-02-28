@@ -8,8 +8,11 @@ from src.gui.db_widgets.generic_widgets import TitleLabel
 
 label_height = 24
 
-class ClubNameLabel(QLabel):    
-    def __init__(self, name, max_width: int, alignment: Qt.AlignmentFlag = Qt.AlignLeft):
+
+class ClubNameLabel(QLabel):
+    def __init__(
+        self, name, max_width: int, alignment: Qt.AlignmentFlag = Qt.AlignLeft
+    ):
         super().__init__(name)
         self.setAlignment(alignment | Qt.AlignVCenter)
         self.setFont(QFont("DejaVu Sans", 12, QFont.Bold))
@@ -18,7 +21,9 @@ class ClubNameLabel(QLabel):
 
 class ScoreVersusLabel(QLabel):
     def __init__(self, result, max_width: int):
-        super().__init__("v" if result is None else f"{result.home_score} - {result.away_score}")
+        super().__init__(
+            "v" if result is None else f"{result.home_score} - {result.away_score}"
+        )
         self.setAlignment(Qt.AlignCenter)
         self.setFont(QFont("Consolas", 12))
         self.setFixedSize(QSize(max_width, label_height))
@@ -68,7 +73,7 @@ class FixtureResultList(QWidget):
         layout.addStretch(10)
 
     def set_fixtures(self, fixtures):
-        
+
         for w in self._widgets:
             self._widgets_layout.removeWidget(w)
             w.deleteLater()
@@ -93,4 +98,3 @@ class FixtureResultList(QWidget):
             self._title.setText("Results")
         else:
             self._title.setText("Fixtures/Results")
-

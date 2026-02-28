@@ -7,32 +7,17 @@ from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
 
+from src.core.constants import APP_TITLE, version_str
 
-from src.core.constants import (
-    APP_TITLE, 
-    APP_AUTHOR, 
-    APP_VERSION,
-    version_str
-)
-
-from src.core.db.models import SeasonDB, LeagueDB
-from src.core.db.league_db_functions import get_league_table_data
-from src.core.db.game_worker import GameDBWorker, WorldState, WorldStateEngine
+from src.core.db.game_worker import WorldState
 
 from src.gui.db_widgets.game_engine_object import GameEngineObject
 
 from src.gui.db_widgets.generic_widgets import TitleLabel
-from src.gui.db_widgets.object_views import (
-    StaffTreeWidget,
-    PlayerTreeWidget,
-    CompetitionListWidget
-)
 
 
 from src.gui.db_widgets.fixture_result_widgets import FixtureResultList
 
-from src.gui.db_widgets.league_views import LeagueView
-from src.gui.db_widgets.club_widget import ClubWidget
 
 
 from .utils import set_white_bg
@@ -226,10 +211,8 @@ from .generic_widgets import BusyPage
 #         return self._db_worker is not None
 
 
-
-
 class DateLabel(TitleLabel):
-    def __init__(self, title = None, size = 12, parent=None):
+    def __init__(self, title=None, size=12, parent=None):
         super().__init__(title, size, parent)
 
     def set_date(self, season, week):
@@ -252,7 +235,7 @@ class BlankGameWidget(QWidget):
 
 
 class PlaceholderGamePage(QWidget):
-    def __init__(self, text: str="", parent=None):
+    def __init__(self, text: str = "", parent=None):
         super().__init__(parent=parent)
         center_label = TitleLabel(text)
         layout = QVBoxLayout(self)
@@ -267,6 +250,7 @@ class NewSeasonWidget(PlaceholderGamePage):
 class PostSeasonWidget(PlaceholderGamePage):
     def __init__(self, parent=None):
         super().__init__("Post Season", parent=parent)
+
 
 class PreFixturesWidget(BlankGameWidget):
     def __init__(self, parent=None):
@@ -298,12 +282,12 @@ class PostFixturesWidget(BlankGameWidget):
     def set_fixtures(self, fixtures):
         self._fixture_list.set_fixtures(fixtures)
 
+
 class AwaitingContinueWidget(BlankGameWidget):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         layout = QVBoxLayout(self)
         layout.addWidget(TitleLabel("Awaiting Continue"), 0, Qt.AlignLeft | Qt.AlignTop)
-
 
 
 class DBMainGameView(QWidget):
@@ -317,8 +301,6 @@ class DBMainGameView(QWidget):
         self._game_engine.state_engine_changed.connect(self.on_state_engine_changed)
         self._game_engine.game_advanced.connect(self.on_game_advanced)
 
-
-
         self._pages = {
             "blank": BlankGameWidget(),
             "new_season": NewSeasonWidget(),
@@ -326,7 +308,7 @@ class DBMainGameView(QWidget):
             "pre_fixtures": PreFixturesWidget(),
             "processing_fixtures": ProcessingFixturesWidget(),
             "post_fixtures": PostFixturesWidget(),
-            "awaiting_continue": AwaitingContinueWidget()
+            "awaiting_continue": AwaitingContinueWidget(),
         }
 
         self._game_view_stack = QStackedWidget()
@@ -338,7 +320,6 @@ class DBMainGameView(QWidget):
         stack_frame.setFrameStyle(QFrame.StyledPanel | QFrame.Sunken)
         stack_frame_layout = QVBoxLayout(stack_frame)
         stack_frame_layout.addWidget(self._game_view_stack, 1000)
-
 
         self.setAutoFillBackground(True)
 
@@ -355,17 +336,19 @@ class DBMainGameView(QWidget):
         top_bar_layout = QHBoxLayout(self.top_bar_frame)
         top_bar_layout.addWidget(self._date_lbl, 0, Qt.AlignLeft | Qt.AlignTop)
         top_bar_layout.addWidget(self._main_menu_btn, 0, Qt.AlignRight | Qt.AlignTop)
-        
+
         self.bottom_bar_frame = QFrame()
         self.bottom_bar_frame.setFrameStyle(QFrame.StyledPanel | QFrame.Sunken)
         bottom_bar_layout = QHBoxLayout(self.bottom_bar_frame)
-        bottom_bar_layout.addWidget(self._continue_btn, 0, Qt.AlignRight | Qt.AlignVCenter)
+        bottom_bar_layout.addWidget(
+            self._continue_btn, 0, Qt.AlignRight | Qt.AlignVCenter
+        )
 
         layout = QVBoxLayout(self)
         layout.addWidget(self.top_bar_frame)
-        layout.addWidget(stack_frame,100)
+        layout.addWidget(stack_frame, 100)
         layout.addWidget(self.bottom_bar_frame)
-    
+
     def on_state_engine_changed(self):
         self.invalidate()
 
@@ -467,13 +450,12 @@ class DBMainMenuView(QWidget):
 
 
 class LogWindow(QTextEdit):
-
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         # self.setWindowFlags(Qt.Tool)
         self.setReadOnly(True)
         self.setMinimumSize(256, 96)
-        
+
 
 class MainView(QStackedWidget):
     """
@@ -483,7 +465,9 @@ class MainView(QStackedWidget):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         self._game_engine_object = GameEngineObject()
-        self._game_engine_object.state_engine_changed.connect(self.on_state_engine_changed)
+        self._game_engine_object.state_engine_changed.connect(
+            self.on_state_engine_changed
+        )
 
         self.setAutoFillBackground(True)
         self.setContentsMargins(QMargins(0, 0, 0, 0))
