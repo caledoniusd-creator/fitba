@@ -1,7 +1,10 @@
 from __future__ import annotations
 import logging
+from os.path import exists
+from os import mkdir
 from random import shuffle, randint, seed as rnd_seed
 from sqlalchemy import select, desc, asc
+
 
 from src.core.utils import random_seed
 from src.core.game_types import (
@@ -10,13 +13,13 @@ from src.core.game_types import (
     Position,
     StaffRole,
     ContractType,
+    CompetitionType,
 )
 
 from src.core.world_time import WEEKS_IN_YEAR
 
 from src.core.ability import random_ability
 from src.core.club import CLUB_NAMES
-from src.core.competition import CompetitionType
 from src.core.people import PersonFactory
 from src.core.db.models import (
     WeekDB,
@@ -387,6 +390,8 @@ class DatabaseCreator(DatabaseWorker):
         logging.info(
             f"Create New Database '{self._db_path}', delete existing: {self._delete_existsing}, seed:{hex(self._game_seed)}"
         )
+        if not exists("var/"):
+            mkdir("var/")
         create_tables(self._db_path, self._delete_existsing)
 
         self._pre_populate_db()

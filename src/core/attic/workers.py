@@ -4,9 +4,9 @@ from random import choices, shuffle, randrange
 from typing import List
 
 from .game_types import StaffRole
-from .world_time import WEEKS_IN_YEAR, WorldTime
+from ..world_time import WEEKS_IN_YEAR, WorldTime
 from .calendars import Season
-from .club import Club, ClubFactory
+from ..club import Club, ClubFactory
 from .competition import CompetitionType, Competition, League, Cup
 from .leagues import league_30_fixtures, create_league_fixtures
 from .fixture import Fixture, Result

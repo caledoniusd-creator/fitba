@@ -66,6 +66,13 @@ class ContractType(Enum):
 
 
 @unique
+class CompetitionType(Enum):
+    FRIENDLY = 0
+    LEAGUE = 100
+    KNOCKOUT = 1000
+
+
+@unique
 class Position(Enum):
     Goalkeeper = (1, "GK", "Goalkeeper")
     Defender = (2, "DF", "Defender")

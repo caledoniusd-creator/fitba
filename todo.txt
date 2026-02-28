@@ -1,12 +1,14 @@
 
+Application Todo List
+
+UI: Reinstate Club View, maybe various views for staff and squad and analysis
 DB: use in memory db?
 DB: save to disk?
-
-core: Use Game States with New DB structure
 core: Create Match Simulator
 
 
 Done:
+core: Use Game States with New DB structure
 UI: Auto run to end of season!
 core: Use DB instead of previous objects for game
 UI: Use new DB Structure

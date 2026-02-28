@@ -1,11 +1,12 @@
 from argparse import ArgumentParser
 import logging
 
-from cli.cli_game import cli_app_main
+# from cli.cli_game import cli_app_main
 
+from src.database_main import game_state_engine
 from src.gui.ui_db import run_db_gui_application
 
-
+ 
 if __name__ == "__main__":
     parser = ArgumentParser("Fitba")
     parser.add_argument(
@@ -20,7 +21,7 @@ if __name__ == "__main__":
 
     if args.gui:
         # run_gui_application()
-        # db_main()
         run_db_gui_application()
     else:
-        cli_app_main()
+        # cli_app_main()
+        game_state_engine(seasons=2)

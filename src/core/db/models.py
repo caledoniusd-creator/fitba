@@ -11,10 +11,9 @@ from ..game_types import (
     StaffRole,
     ReputationLevel,
     ContractType,
+    CompetitionType,
     Position,
 )
-
-from ..competition import CompetitionType
 
 
 class Base(DeclarativeBase):

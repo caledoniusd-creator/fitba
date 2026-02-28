@@ -1,6 +1,6 @@
 from typing import List, Dict
 
-from .club import Club
+from ..club import Club
 from .competition import League
 from .fixture import Result
 

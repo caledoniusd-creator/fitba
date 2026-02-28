@@ -15,7 +15,7 @@ from src.gui.db_widgets.game_engine_object import GameEngineObject
 
 from src.gui.db_widgets.generic_widgets import TitleLabel
 
-
+from src.gui.db_widgets.league_views import LeagueView
 from src.gui.db_widgets.fixture_result_widgets import FixtureResultList
 
 
@@ -229,12 +229,42 @@ class ContinueBtn(QPushButton):
         self.setFont(QFont("DejaVu Sans", 14, QFont.Bold))
 
 
-class BlankGameWidget(QWidget):
+class TwinLeagueView(QFrame):
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
+        self.setFrameStyle(QFrame.StyledPanel | QFrame.Plain)        
+        self._league_1 = LeagueView()
+        self._league_2 = LeagueView()
+        leagues_layout = QHBoxLayout(self)
+        leagues_layout.addWidget(self._league_1)
+        leagues_layout.addWidget(self._league_2)
+
+    def clear(self):
+        for v in [self._league_1, self._league_2]:
+            v.clear()
+
+    def update_leagues(self, league_1, league_2, season):
+        views = [self._league_1, self._league_2]
+        for v in views:
+            v.clear()
+
+        for lg, v in zip([league_1, league_2], views):
+            v.set_league(lg, season)
+
+
+class BaseGameWidget(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
+
+    def update_data(self, game_engine: GameEngineObject):
+        pass
+
+class BlankGameWidget(BaseGameWidget):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
 
 
-class PlaceholderGamePage(QWidget):
+class PlaceholderGamePage(BaseGameWidget):
     def __init__(self, text: str = "", parent=None):
         super().__init__(parent=parent)
         center_label = TitleLabel(text)
@@ -247,13 +277,28 @@ class NewSeasonWidget(PlaceholderGamePage):
         super().__init__("New Season", parent=parent)
 
 
-class PostSeasonWidget(PlaceholderGamePage):
+class PostSeasonWidget(BaseGameWidget):
     def __init__(self, parent=None):
-        super().__init__("Post Season", parent=parent)
+        super().__init__(parent=parent)
+        self._league_views = TwinLeagueView()
+        center_label = TitleLabel("Post Season")
+        layout = QVBoxLayout(self)
+        layout.addWidget(center_label, 0, Qt.AlignHCenter | Qt.AlignTop)
+        layout.addWidget(self._league_views, 100)
+
+    def update_data(self, game_engine: GameEngineObject):
+        print(f"Update date for PostSeasonWidget")
+        
+        self._league_views.clear()
+        if game_engine.is_active:
+            season = game_engine.world_time[0]
+            leagues = game_engine.state_engine.game_worker.worker.get_leagues()
+            if not season:
+                raise RuntimeError("Invalid Season")
+            self._league_views.update_leagues(leagues[0], leagues[1], season)
 
 
-
-class BaseFixturesWidget(BlankGameWidget):
+class BaseFixturesWidget(BaseGameWidget):
     def __init__(self, state_text: str, parent=None):
         super().__init__(parent=parent)
         self._fixture_list = FixtureResultList()
@@ -281,11 +326,43 @@ class PostFixturesWidget(BaseFixturesWidget):
         super().__init__("Post Fixtures", parent=parent)
 
 
-class AwaitingContinueWidget(BlankGameWidget):
+
+        
+
+class AwaitingContinueWidget(BaseGameWidget):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
+
+        self._nav_frame = QFrame()
+        self._nav_frame.setFrameStyle(QFrame.StyledPanel | QFrame.Raised)
+
+        home_btn = QPushButton("Home")
+        home_btn.clicked.connect(self.on_home_clicked)
+        nav_frame_layout = QHBoxLayout(self._nav_frame)
+        nav_frame_layout.addWidget(home_btn, 0, Qt.AlignLeft | Qt.AlignVCenter)
+
+       
+
+        self._leagues_view = TwinLeagueView()
+
         layout = QVBoxLayout(self)
         layout.addWidget(TitleLabel("Awaiting Continue"), 0, Qt.AlignLeft | Qt.AlignTop)
+        layout.addWidget(self._nav_frame)
+        layout.addWidget(self._leagues_view, 100)
+
+    def on_home_clicked(self):
+        pass
+
+    def update_data(self, game_engine: GameEngineObject):
+        print(f"Update date for AwaitingContinueWidget")
+        
+        self._leagues_view.clear()
+        if game_engine.is_active:
+            season = game_engine.world_time[0]
+            leagues = game_engine.state_engine.game_worker.worker.get_leagues()
+            if not season:
+                raise RuntimeError("Invalid Season")
+            self._leagues_view.update_leagues(leagues[0], leagues[1], season)
 
 
 class DBMainGameView(QWidget):
@@ -366,49 +443,48 @@ class DBMainGameView(QWidget):
         self.invalidate()
 
     def invalidate(self):
+        new_page = None
         if self._game_engine.state == WorldState.NewSeason:
             self.top_bar_frame.setVisible(False)
             self._extra_continue_frame.setVisible(False)
-            self._game_view_stack.setCurrentWidget(self._pages["new_season"])
-
+            new_page = self._pages["new_season"]
+            
         elif self._game_engine.state == WorldState.PostSeason:
             self.top_bar_frame.setVisible(False)
             self._extra_continue_frame.setVisible(False)
-            self._game_view_stack.setCurrentWidget(self._pages["post_season"])
+            new_page = self._pages["post_season"]
 
         elif self._game_engine.state == WorldState.PreFixtures:
             self.top_bar_frame.setVisible(False)
             self._extra_continue_frame.setVisible(False)
-            current_fixtures = self._game_engine.current_fixtures()
-            print(f"Current Fixtures: {len(current_fixtures)}")
-            w = self._pages["pre_fixtures"]
-            w.set_fixtures(current_fixtures)
-            self._game_view_stack.setCurrentWidget(w)
-
+            new_page = self._pages["pre_fixtures"]
+            new_page.set_fixtures(self._game_engine.current_fixtures())
+        
         elif self._game_engine.state == WorldState.ProcessingFixtures:
             self.top_bar_frame.setVisible(False)
             self._extra_continue_frame.setVisible(False)
-            self._game_view_stack.setCurrentWidget(self._pages["processing_fixtures"])
+            new_page = self._pages["processing_fixtures"]
 
         elif self._game_engine.state == WorldState.PostFixtures:
             self.top_bar_frame.setVisible(False)
             self._extra_continue_frame.setVisible(False)
-            current_fixtures = self._game_engine.current_result_fixtures()
-            print(f"Current Fixtures: {len(current_fixtures)}")
-            w = self._pages["post_fixtures"]
-            w.set_fixtures(current_fixtures)
-            self._game_view_stack.setCurrentWidget(w)
+            new_page = self._pages["post_fixtures"]
+            new_page.set_fixtures(self._game_engine.current_result_fixtures())
 
         elif self._game_engine.state == WorldState.AwaitingContinue:
             self.top_bar_frame.setVisible(True)
             self._extra_continue_frame.setVisible(True)
-            self._game_view_stack.setCurrentWidget(self._pages["awaiting_continue"])
+            new_page = self._pages["awaiting_continue"]
 
         else:
             print(f"Unhandelled state {self._game_engine.state}")
             self.top_bar_frame.setVisible(True)
             self._extra_continue_frame.setVisible(True)
-            self._game_view_stack.setCurrentWidget(self._pages["blank"])
+            new_page = self._pages["blank"]
+
+        if isinstance(new_page, BaseGameWidget):
+            new_page.update_data(self._game_engine)
+            self._game_view_stack.setCurrentWidget(new_page)
 
         self._date_lbl.set_date(*(self._game_engine.world_time))
 
@@ -539,8 +615,12 @@ class MainView(QStackedWidget):
         self.on_show_game_view()
 
     def on_load_game(self):
-        self.set_busy("Loading game...")
-        self.on_show_game_view()
+        print("Load Game !")
+        self.run_thread_function(
+            self._game_engine_object.load_game,
+            self.on_show_game_view,
+            "Creating Game...",
+        )
 
     def on_exit_game(self):
         print("Exit Game !")
@@ -616,9 +696,14 @@ class AppMainWindow(QMainWindow):
         self.log_toggle_action = QAction()
         self.log_toggle_action.setShortcut(QKeySequence(Qt.Key_F1))
         self.log_toggle_action.setShortcutContext(Qt.ApplicationShortcut)
-        self.log_toggle_action.triggered.connect(self._log_docked_widget.show)
+        self.log_toggle_action.triggered.connect(self.toggle_log_dock)
         self.addAction(self.log_toggle_action)
 
+    def toggle_log_dock(self):
+        if self._log_docked_widget.isVisible():
+            self._log_docked_widget.hide()
+        else:
+            self._log_docked_widget.show()
 
 class GUIDBApplication(QApplication):
     """

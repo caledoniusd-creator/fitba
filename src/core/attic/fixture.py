@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import List
 
-from .club import Club
+from ..club import Club
 from .competition import Competition
 
 

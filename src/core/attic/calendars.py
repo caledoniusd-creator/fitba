@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional
 
 
-from .world_time import WEEKS_IN_YEAR
+from ..world_time import WEEKS_IN_YEAR
 from .fixture import Result
 
 

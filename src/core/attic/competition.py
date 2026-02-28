@@ -1,7 +1,7 @@
 from enum import Enum, unique
 
 
-from .club import Club
+from ..club import Club
 
 
 @unique

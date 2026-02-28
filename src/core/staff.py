@@ -31,25 +31,3 @@ class StaffMemberFactory:
         return StaffMember(person, role, ReputationLevel.random(), random_ability())
 
 
-class StaffPool:
-    def __init__(self):
-        self._staff = set()
-
-    def get_all_staff(self):
-        return list(self._staff)
-
-    @property
-    def count(self):
-        return len(self._staff)
-
-    def add_staff_person(self, staff_person: StaffMember):
-        self._staff.add(staff_person)
-
-    def add_staff_people(self, staff_people: List[StaffMember]):
-        self._staff.update(staff_people)
-
-    def clear(self):
-        self._staff.clear()
-
-    def remove_staff_person(self, staff_person: StaffMember):
-        self._staff.discard(staff_person)

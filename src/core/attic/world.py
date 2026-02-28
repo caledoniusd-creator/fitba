@@ -3,9 +3,9 @@ from random import seed as rand_seed
 
 from typing import Optional, List
 
-from .world_time import WorldTime
+from ..world_time import WorldTime
 from .calendars import Season
-from .club import ClubPool
+from ..club import ClubPool
 from .competition import Competition
 from .people import PersonPool
 from .staff import StaffPool

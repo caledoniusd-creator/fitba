@@ -43,6 +43,11 @@ class GameEngineObject(QObject):
             new_state_engine.advance_game()
         self.state_engine = new_state_engine
 
+    def load_game(self):
+        new_state_engine = WorldStateEngine()
+        new_state_engine.state = WorldState.AwaitingContinue
+        self.state_engine = new_state_engine
+
     def close_state_engine(self):
         if self.state_engine:
             self.state_engine = None
