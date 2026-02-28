@@ -6,7 +6,7 @@ import logging
 from src.database_main import game_state_engine
 from src.gui.ui_db import run_db_gui_application
 
- 
+
 if __name__ == "__main__":
     parser = ArgumentParser("Fitba")
     parser.add_argument(

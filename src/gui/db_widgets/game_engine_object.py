@@ -32,6 +32,12 @@ class GameEngineObject(QObject):
             None
 
     @property
+    def db_worker(self):
+        if self._state_engine:
+            return self._state_engine.game_worker.worker
+        return None
+
+    @property
     def world_time(self):
         if not self._state_engine:
             return None, None

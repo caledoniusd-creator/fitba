@@ -4,7 +4,6 @@ from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
 
-
 from .game_engine_object import GameEngineObject
 from .generic_widgets import TitleLabel
 from .fixture_result_widgets import FixtureResultList

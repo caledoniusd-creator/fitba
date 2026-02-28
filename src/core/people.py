@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from faker import Faker
 from random import gauss
-from typing import List
 
 
 from .game_types import PersonalityType

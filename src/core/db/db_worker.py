@@ -97,6 +97,9 @@ class DatabaseWorker:
     def get_clubs(self):
         return self.session.scalars(select(ClubDB)).all()
 
+    def get_club(self, club_id: int):
+        return self.session.scalars(select(ClubDB).where(ClubDB.id == club_id)).first()
+
     def get_competitions(self):
         return self.session.scalars(select(CompetitionDB)).all()
 

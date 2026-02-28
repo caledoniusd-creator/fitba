@@ -1,4 +1,3 @@
-from PySide6.QtCore import Qt
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
@@ -29,7 +28,7 @@ class ContinueBtn(QPushButton):
 class TwinLeagueView(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
-        self.setFrameStyle(QFrame.StyledPanel | QFrame.Plain)        
+        self.setFrameStyle(QFrame.StyledPanel | QFrame.Plain)
         self._league_1 = LeagueView()
         self._league_2 = LeagueView()
         leagues_layout = QHBoxLayout(self)

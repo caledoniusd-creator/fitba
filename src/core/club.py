@@ -1,4 +1,3 @@
-from random import shuffle, randint
 
 CLUB_NAMES = [
     "Red Lions",
@@ -93,4 +92,3 @@ CLUB_NAMES = [
     "Sunderland Surge",
     "Norwich Navigators",
 ]
-

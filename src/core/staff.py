@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Optional
 
 
 from .game_types import ReputationLevel, StaffRole
@@ -29,5 +29,3 @@ class StaffMemberFactory:
     @staticmethod
     def random_staff_member(person: Person, role: StaffRole):
         return StaffMember(person, role, ReputationLevel.random(), random_ability())
-
-
