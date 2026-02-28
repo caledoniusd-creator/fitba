@@ -21,6 +21,7 @@ if __name__ == "__main__":
 
     if args.gui:
         # run_gui_application()
+
         run_db_gui_application()
     else:
         # cli_app_main()
