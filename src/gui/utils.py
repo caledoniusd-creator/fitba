@@ -32,3 +32,4 @@ def set_white_bg(widget):
     palette = QPalette(widget.palette())
     palette.setColor(QPalette.ColorRole.Window, QColor(255, 255, 255))
     widget.setPalette(palette)
+

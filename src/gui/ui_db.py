@@ -252,17 +252,23 @@ class PostSeasonWidget(PlaceholderGamePage):
         super().__init__("Post Season", parent=parent)
 
 
-class PreFixturesWidget(BlankGameWidget):
-    def __init__(self, parent=None):
+
+class BaseFixturesWidget(BlankGameWidget):
+    def __init__(self, state_text: str, parent=None):
         super().__init__(parent=parent)
         self._fixture_list = FixtureResultList()
 
         layout = QVBoxLayout(self)
-        layout.addWidget(TitleLabel("Pre Fixtures"), 0, Qt.AlignHCenter | Qt.AlignTop)
+        layout.addWidget(TitleLabel(state_text), 0, Qt.AlignHCenter | Qt.AlignTop)
         layout.addWidget(self._fixture_list, 100)
 
     def set_fixtures(self, fixtures):
         self._fixture_list.set_fixtures(fixtures)
+
+
+class PreFixturesWidget(BaseFixturesWidget):
+    def __init__(self, parent=None):
+        super().__init__("Pre Fixtures", parent=parent)
 
 
 class ProcessingFixturesWidget(PlaceholderGamePage):
@@ -270,17 +276,9 @@ class ProcessingFixturesWidget(PlaceholderGamePage):
         super().__init__("Processing Fixtures", parent=parent)
 
 
-class PostFixturesWidget(BlankGameWidget):
+class PostFixturesWidget(BaseFixturesWidget):
     def __init__(self, parent=None):
-        super().__init__(parent=parent)
-        self._fixture_list = FixtureResultList()
-
-        layout = QVBoxLayout(self)
-        layout.addWidget(TitleLabel("Post Fixtures"), 0, Qt.AlignHCenter | Qt.AlignTop)
-        layout.addWidget(self._fixture_list, 100)
-
-    def set_fixtures(self, fixtures):
-        self._fixture_list.set_fixtures(fixtures)
+        super().__init__("Post Fixtures", parent=parent)
 
 
 class AwaitingContinueWidget(BlankGameWidget):
@@ -292,6 +290,7 @@ class AwaitingContinueWidget(BlankGameWidget):
 
 class DBMainGameView(QWidget):
     continue_game = Signal(name="advanced_game")
+    goto_end_of_season = Signal(name="goto end of season")
     main_menu = Signal(name="main_menu")
 
     def __init__(self, game_engine: GameEngineObject, parent=None):
@@ -331,6 +330,14 @@ class DBMainGameView(QWidget):
         self._continue_btn = ContinueBtn()
         self._continue_btn.clicked.connect(self.continue_game)
 
+        self._continue_end_of_season_btn = QPushButton("To End of Season")
+        self._continue_end_of_season_btn.clicked.connect(self.goto_end_of_season)
+
+        self._extra_continue_frame = QFrame()
+        self._extra_continue_frame.setFrameStyle(QFrame.StyledPanel | QFrame.Plain)
+        extra_continue_frame_layout = QHBoxLayout(self._extra_continue_frame)
+        extra_continue_frame_layout.addWidget(self._continue_end_of_season_btn, 0, Qt.AlignLeft | Qt.AlignVCenter)
+
         self.top_bar_frame = QFrame()
         self.top_bar_frame.setFrameStyle(QFrame.StyledPanel | QFrame.Sunken)
         top_bar_layout = QHBoxLayout(self.top_bar_frame)
@@ -340,6 +347,7 @@ class DBMainGameView(QWidget):
         self.bottom_bar_frame = QFrame()
         self.bottom_bar_frame.setFrameStyle(QFrame.StyledPanel | QFrame.Sunken)
         bottom_bar_layout = QHBoxLayout(self.bottom_bar_frame)
+        bottom_bar_layout.addWidget(self._extra_continue_frame, 0, Qt.AlignLeft | Qt.AlignVCenter)
         bottom_bar_layout.addWidget(
             self._continue_btn, 0, Qt.AlignRight | Qt.AlignVCenter
         )
@@ -348,6 +356,8 @@ class DBMainGameView(QWidget):
         layout.addWidget(self.top_bar_frame)
         layout.addWidget(stack_frame, 100)
         layout.addWidget(self.bottom_bar_frame)
+
+        self.invalidate()
 
     def on_state_engine_changed(self):
         self.invalidate()
@@ -358,14 +368,17 @@ class DBMainGameView(QWidget):
     def invalidate(self):
         if self._game_engine.state == WorldState.NewSeason:
             self.top_bar_frame.setVisible(False)
+            self._extra_continue_frame.setVisible(False)
             self._game_view_stack.setCurrentWidget(self._pages["new_season"])
 
         elif self._game_engine.state == WorldState.PostSeason:
             self.top_bar_frame.setVisible(False)
+            self._extra_continue_frame.setVisible(False)
             self._game_view_stack.setCurrentWidget(self._pages["post_season"])
 
         elif self._game_engine.state == WorldState.PreFixtures:
             self.top_bar_frame.setVisible(False)
+            self._extra_continue_frame.setVisible(False)
             current_fixtures = self._game_engine.current_fixtures()
             print(f"Current Fixtures: {len(current_fixtures)}")
             w = self._pages["pre_fixtures"]
@@ -374,10 +387,12 @@ class DBMainGameView(QWidget):
 
         elif self._game_engine.state == WorldState.ProcessingFixtures:
             self.top_bar_frame.setVisible(False)
+            self._extra_continue_frame.setVisible(False)
             self._game_view_stack.setCurrentWidget(self._pages["processing_fixtures"])
 
         elif self._game_engine.state == WorldState.PostFixtures:
             self.top_bar_frame.setVisible(False)
+            self._extra_continue_frame.setVisible(False)
             current_fixtures = self._game_engine.current_result_fixtures()
             print(f"Current Fixtures: {len(current_fixtures)}")
             w = self._pages["post_fixtures"]
@@ -386,11 +401,13 @@ class DBMainGameView(QWidget):
 
         elif self._game_engine.state == WorldState.AwaitingContinue:
             self.top_bar_frame.setVisible(True)
+            self._extra_continue_frame.setVisible(True)
             self._game_view_stack.setCurrentWidget(self._pages["awaiting_continue"])
 
         else:
             print(f"Unhandelled state {self._game_engine.state}")
             self.top_bar_frame.setVisible(True)
+            self._extra_continue_frame.setVisible(True)
             self._game_view_stack.setCurrentWidget(self._pages["blank"])
 
         self._date_lbl.set_date(*(self._game_engine.world_time))
@@ -486,7 +503,7 @@ class MainView(QStackedWidget):
         self._views["main_menu"].exit_game.connect(self.on_exit_game)
         self._views["game_view"].main_menu.connect(self.on_main_menu)
         self._views["game_view"].advanced_game.connect(self.on_advanced_game)
-
+        self._views["game_view"].goto_end_of_season.connect(self.on_goto_end_of_season)
         for view in self._views.values():
             self.addWidget(view)
 
@@ -546,7 +563,7 @@ class MainView(QStackedWidget):
     def on_main_menu(self):
         widget = self._views["main_menu"]
         if isinstance(widget, DBMainMenuView):
-            widget.set_can_continue(self._game_engine_object.is_active())
+            widget.set_can_continue(self._game_engine_object.is_active)
         self.setCurrentWidget(widget)
 
     def on_advanced_game(self):
@@ -562,6 +579,16 @@ class MainView(QStackedWidget):
     def on_advanced_game_done(self):
         print("Game advanced !")
         self.on_show_game_view()
+
+    def on_goto_end_of_season(self):
+        print("Advance to end of Season !")
+        widget = self.currentWidget()
+        if widget is not None and isinstance(widget, DBMainGameView):
+            self.run_thread_function(
+                self._game_engine_object.advance_to_end_of_season,
+                self.on_advanced_game_done,
+                "Advancing to end of Season...",
+            )
 
 
 class AppMainWindow(QMainWindow):

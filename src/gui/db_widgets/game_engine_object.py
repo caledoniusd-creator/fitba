@@ -53,6 +53,12 @@ class GameEngineObject(QObject):
         self._state_engine.advance_game()
         self.game_advanced.emit()
 
+    def advance_to_end_of_season(self):
+        if not self._state_engine:
+            raise RuntimeError("No State Engine to advance to end of season")
+        self._state_engine.advance_to_post_season()
+        self.game_advanced.emit()
+
     @property
     def is_active(self):
         return self._state_engine is not None
