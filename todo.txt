@@ -1,13 +1,14 @@
 
 Application Todo List
 
-UI: Reinstate Club View, maybe various views for staff and squad and analysis
+UI: Club View various views for staff and squad and analysis
 DB: use in memory db?
 DB: save to disk?
 core: Create Match Simulator
 
 
 Done:
+UI: Reinstate Club View
 core: Use Game States with New DB structure
 UI: Auto run to end of season!
 core: Use DB instead of previous objects for game
