@@ -13,7 +13,7 @@ from src.core.db.game_worker import WorldState
 
 from src.gui.db_widgets.game_engine_object import GameEngineObject
 
-from src.gui.db_widgets.generic_widgets import TitleLabel
+from src.gui.db_widgets.generic_widgets import TitleLabel, LogWindow
 
 from src.gui.db_widgets.club_widget import ClubWidget
 
@@ -437,14 +437,6 @@ class DBMainMenuView(QWidget):
     def set_can_continue(self, can_continue: bool):
         if self.btn_continue_game is not None:
             self.btn_continue_game.setEnabled(can_continue)
-
-
-class LogWindow(QTextEdit):
-    def __init__(self, parent=None):
-        super().__init__(parent=parent)
-        # self.setWindowFlags(Qt.Tool)
-        self.setReadOnly(True)
-        self.setMinimumSize(256, 96)
 
 
 class MainView(QStackedWidget):

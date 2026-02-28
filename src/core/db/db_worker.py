@@ -133,10 +133,8 @@ class DatabaseWorker:
         ).all()
 
     def get_fixtures_for_current_week(self):
-
         world = self.get_world()
         if world:
-            logging.info(f"Get Fixtures for week: {world.current_week}")
             return self.session.scalars(
                 select(FixtureDB)
                 .where(FixtureDB.season_id == world.season_id)
@@ -146,19 +144,15 @@ class DatabaseWorker:
         return []
 
     def get_results_for_current_week(self):
-
         world = self.get_world()
         if world:
-            logging.info(f"Get Fixtures for week: {world.current_week}")
             fixtures = self.session.scalars(
                 select(FixtureDB)
                 .where(FixtureDB.season_id == world.season_id)
                 .where(FixtureDB.season_week == world.current_week)
                 .where(FixtureDB.result != None)
             ).all()
-
             return [f.result for f in fixtures]
-
         return []
 
     def get_clubs_not_in_leagues_for_season(self, season: SeasonDB | None = None):

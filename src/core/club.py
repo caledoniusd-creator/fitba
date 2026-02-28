@@ -1,4 +1,3 @@
-
 CLUB_NAMES = [
     "Red Lions",
     "AFC Tigers",
