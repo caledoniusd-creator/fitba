@@ -50,7 +50,7 @@ class ClubWidget(QWidget):
 
     def invalidate(self):
         if self._club is not None:
-            self._title.setText(f"{self._club.name}")
+            self._title.setText(f"{self._club.name} ({self._club.id})")
             self._staff_list.set_staff(self._club.staff_members())
             self._player_list.set_players(self._club.players())
             self._comp_list.set_competitions(self._club.competitions())

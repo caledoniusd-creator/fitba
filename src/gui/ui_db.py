@@ -184,7 +184,7 @@ class PostSeasonWidget(BaseGameWidget):
         self._league_views.clear()
         if game_engine.is_active:
             season = game_engine.world_time[0]
-            leagues = game_engine.state_engine.game_worker.worker.get_leagues()
+            leagues = game_engine.db_worker.get_leagues()
             if not season:
                 raise RuntimeError("Invalid Season")
             self._league_views.update_leagues(leagues[0], leagues[1], season)
