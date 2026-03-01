@@ -5,12 +5,9 @@ import logging
 from random import randint
 
 
-from src.core.world_time import WEEKS_IN_YEAR
-
-from .db.league_db_functions import get_league_table_data
-from .db.db_worker import DatabaseWorker, DatabaseCreator
-
+from .world_time import WEEKS_IN_YEAR
 from .db.game_worker import create_score, GameDBWorker
+
 
 @unique
 class WorldState(Enum):

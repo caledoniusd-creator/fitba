@@ -2,7 +2,7 @@ from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
-
+from src.core.world_time import WEEKS_IN_YEAR
 from src.core.world_state_engine import WorldState, WorldStateEngine
 
 
@@ -69,6 +69,13 @@ class GameEngineObject(QObject):
             raise RuntimeError("No State Engine to advance to end of season")
         self._state_engine.advance_to_post_season()
         self.game_advanced.emit()
+
+    def advance_to_next_week(self):
+        if not self._state_engine:
+            raise RuntimeError("No State Engine to advance to end of season")
+        if self.world_time[1].week_num < WEEKS_IN_YEAR:
+            self._state_engine.advance_to_new_week()
+            self.game_advanced.emit()
 
     @property
     def is_active(self):

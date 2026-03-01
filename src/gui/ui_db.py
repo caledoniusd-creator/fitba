@@ -217,6 +217,7 @@ class AwaitingContinueWidget(BaseGameWidget):
 class DBMainGameView(QWidget):
     continue_game = Signal(name="advanced_game")
     goto_end_of_season = Signal(name="goto end of season")
+    goto_next_week = Signal(name="goto next week")
     main_menu = Signal(name="main_menu")
 
     def __init__(self, game_engine: GameEngineObject, parent=None):
@@ -259,9 +260,15 @@ class DBMainGameView(QWidget):
         self._continue_end_of_season_btn = QPushButton("To End of Season")
         self._continue_end_of_season_btn.clicked.connect(self.goto_end_of_season)
 
+        self._continue_next_week_btn = QPushButton("To next Week")
+        self._continue_next_week_btn.clicked.connect(self.goto_next_week)
+
         self._extra_continue_frame = QFrame()
         self._extra_continue_frame.setFrameStyle(QFrame.StyledPanel | QFrame.Plain)
         extra_continue_frame_layout = QHBoxLayout(self._extra_continue_frame)
+        extra_continue_frame_layout.addWidget(
+            self._continue_next_week_btn, 0, Qt.AlignLeft | Qt.AlignVCenter
+        )
         extra_continue_frame_layout.addWidget(
             self._continue_end_of_season_btn, 0, Qt.AlignLeft | Qt.AlignVCenter
         )
@@ -426,6 +433,7 @@ class MainView(QStackedWidget):
         self._views["game_view"].main_menu.connect(self.on_main_menu)
         self._views["game_view"].advanced_game.connect(self.on_advanced_game)
         self._views["game_view"].goto_end_of_season.connect(self.on_goto_end_of_season)
+        self._views["game_view"].goto_next_week.connect(self.on_goto_next_week)
         for view in self._views.values():
             self.addWidget(view)
 
@@ -516,6 +524,15 @@ class MainView(QStackedWidget):
                 "Advancing to end of Season...",
             )
 
+    def on_goto_next_week(self):
+        print("Advance to Next Week")
+        widget = self.currentWidget()
+        if widget is not None and isinstance(widget, DBMainGameView):
+            self.run_thread_function(
+                self._game_engine_object.advance_to_next_week,
+                self.on_advanced_game_done,
+                "Advancing to new Week...",
+            )
 
 class AppMainWindow(QMainWindow):
     """
