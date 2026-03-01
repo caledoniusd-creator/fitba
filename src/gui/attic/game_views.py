@@ -10,8 +10,8 @@ from core.league_table import LeagueTableWorker
 from core.workers import WorldState, WorldStateEngine
 
 
-from .utils import change_font, set_dark_bg
-from .generic_widgets import PagesWidget, NextContinueStackedWidget
+from src.gui.utils import change_font, set_dark_bg
+from src.gui.generic_widgets import PagesWidget, NextContinueStackedWidget
 from .view_widgets import (
     WorldTimeLabel,
     FixtureList,
@@ -20,7 +20,7 @@ from .view_widgets import (
     ClubsTableListWidget,
     ClubListView,
 )
-from .club_widgets import ClubsListWidget, ClubInfoWidget
+from .attic.club_widgets import ClubsListWidget, ClubInfoWidget
 from .week_view import SeasonWeekScroll
 from .viewbase import ViewBase
 

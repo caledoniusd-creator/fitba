@@ -7,7 +7,7 @@ from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
 
-from .utils import change_font, hline
+from src.gui.utils import change_font, hline
 
 
 class ClubsListWidget(QListWidget):
