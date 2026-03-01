@@ -89,12 +89,21 @@ class QTextEditHandler(logging.Handler):
 
 
 class LogWindow(QTextEdit):
-    def __init__(self, parent=None):
+    def __init__(self, pass_to_console: bool = False, parent=None):
         super().__init__(parent=parent)
-        # self.setWindowFlags(Qt.Tool)
+        self._pass_to_console = pass_to_console
         self.setReadOnly(True)
         self.setLineWrapMode(QTextEdit.NoWrap)
         self.setMinimumSize(256, 96)
+
+        self.setAutoFillBackground(True)
+
+        palette = QPalette(self.palette())
+        palette.setColor(QPalette.Base, QColor(24, 24, 24))
+        palette.setColor(QPalette.Text, QColor(0, 224, 0))
+        self.setPalette(palette)
+
+        self.setFont(QFont("Consolas", 10))
 
         # Emitter + handler
         self._emitter = QtLogEmitter()
@@ -114,11 +123,19 @@ class LogWindow(QTextEdit):
         root.addHandler(self.qt_handler)
 
         # Optional: keep console logging too
-        if not any(isinstance(h, logging.StreamHandler) for h in root.handlers):
+        if self.pass_to_console and  not any(isinstance(h, logging.StreamHandler) for h in root.handlers):
             console = logging.StreamHandler()
             console.setLevel(logging.DEBUG)
             console.setFormatter(self.qt_handler.formatter)
             root.addHandler(console)
+
+    @property
+    def pass_to_console(self):
+        return self._pass_to_console 
+
+    @pass_to_console.setter
+    def pass_to_console(self, value: bool):
+        self._pass_to_console = value
 
     def _append_log(self, msg: str) -> None:
         # Append and keep view pinned to bottom

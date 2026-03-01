@@ -5,6 +5,8 @@ UI: Club View various views for staff and squad and analysis
 DB: use in memory db?
 DB: save to disk?
 core: Create Match Simulator
+core: End of season Age increase, retirements
+
 
 
 Done:

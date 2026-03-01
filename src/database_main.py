@@ -5,25 +5,13 @@ import sys
 from time import perf_counter, sleep
 from traceback import format_exc
 
-from src.core.db.game_worker import GameDBWorker, WorldState, WorldStateEngine
-
-
-def old_db_test_run():
-    game_worker = GameDBWorker()
-
-    max_seasons = 3
-
-    game_worker.create_new_database(delete_existing=True)
-    count = 0
-    while count < max_seasons:
-        game_worker.do_new_season()
-        game_worker.run_season()
-        game_worker.process_end_of_season()
-        sleep(1.00)
-        count += 1
+from src.core.world_state_engine import  WorldState, WorldStateEngine
 
 
 def game_state_engine(seasons: int = 3):
+    """
+    non interactive game loop
+    """
     state_engine = WorldStateEngine()
     if state_engine.state == WorldState.NewGame:
         state_engine.advance_game()
@@ -37,6 +25,9 @@ def game_state_engine(seasons: int = 3):
 
 
 def game_with_state_engine_test_run():
+    """
+    Console UI game loop
+    """
     state_engine = WorldStateEngine()
 
     while True:
@@ -91,7 +82,10 @@ def game_with_state_engine_test_run():
 
 
 def db_main():
-
+    """
+    Test DB Main function
+    simulates a a number of seasons with out a UI
+    """
     logging.basicConfig(
         level=logging.DEBUG,
         format="[%(asctime)s|%(thread)x|%(levelname)s|%(module)s.%(funcName)s] %(message)s",
@@ -100,7 +94,6 @@ def db_main():
     try:
         start_time = perf_counter()
 
-        # old_db_test_run()
         game_state_engine(seasons=3)
         # game_with_state_engine_test_run()
 

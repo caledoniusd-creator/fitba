@@ -9,7 +9,7 @@ from PySide6.QtWidgets import *
 
 from src.core.constants import APP_TITLE, version_str
 
-from src.core.db.game_worker import WorldState
+from src.core.world_state_engine import WorldState
 
 from src.gui.db_widgets.game_engine_object import GameEngineObject
 
@@ -29,49 +29,6 @@ from src.gui.db_widgets.game_widgets import DateLabel, ContinueBtn, TwinLeagueVi
 from .utils import set_white_bg
 from .generic_widgets import BusyPage
 
-
-# class ClubsListWithView(QWidget):
-#     def __init__(self, parent=None):
-#         super().__init__(parent=parent)
-#         self.setAutoFillBackground(True)
-
-#         self._club_List = QListWidget(self)
-#         self._club_List.currentItemChanged.connect(self.on_club_changed)
-#         self._club_view = ClubWidget(self)
-
-#         self._club = None
-
-#         layout = QHBoxLayout(self)
-#         layout.addWidget(self._club_List, 0, Qt.AlignTop | Qt.AlignLeft)
-#         layout.addWidget(self._club_view, 100)
-
-#     def set_club(self, club):
-#         self._club = club
-
-#     def invalidate(self, db_worker: DBObject | None):
-#         if db_worker is not None:
-#             clubs = db_worker.db_worker.worker.get_clubs()
-#             self._club_List.clear()
-#             for club in clubs:
-#                 item = QListWidgetItem(club.name)
-#                 item.setData(Qt.UserRole, club)
-#                 self._club_List.addItem(item)
-#         else:
-#             self._club_List.clear()
-#             self._club = None
-
-#     def on_club_changed(
-#         self, current: QListWidgetItem | None, previous: QListWidgetItem | None
-#     ):
-#         print("Club changed !")
-#         if current is not None:
-#             club = current.data(Qt.UserRole)
-
-#             self.set_club(club)
-#             self._club_view.club = self._club
-#         else:
-#             self.set_club(None)
-#             self._club_view.club = None
 
 
 class GeneralPage(QWidget):
@@ -453,7 +410,7 @@ class MainView(QStackedWidget):
 
         self.setAutoFillBackground(True)
         self.setContentsMargins(QMargins(0, 0, 0, 0))
-        self.setMinimumSize(1920, 1080)
+        # self.setMinimumSize(1920, 1080)
         self.setWindowTitle("Fitba DB GUI")
 
         self._views = {
@@ -576,6 +533,7 @@ class AppMainWindow(QMainWindow):
         self._log_window = LogWindow()
 
         self._log_docked_widget = QDockWidget("Log")
+        # self._log_docked_widget.setFeatures(QDockWidget.DockWidgetClosable | QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable)
         self._log_docked_widget.setWidget(self._log_window)
         self._log_docked_widget.setAllowedAreas(Qt.BottomDockWidgetArea)
         self._log_docked_widget.hide()
@@ -587,6 +545,8 @@ class AppMainWindow(QMainWindow):
         self.log_toggle_action.setShortcutContext(Qt.ApplicationShortcut)
         self.log_toggle_action.triggered.connect(self.toggle_log_dock)
         self.addAction(self.log_toggle_action)
+
+        self.resize(QSize(1920, 1080))
 
     def toggle_log_dock(self):
         if self._log_docked_widget.isVisible():

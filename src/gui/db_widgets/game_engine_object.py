@@ -3,7 +3,7 @@ from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
 
-from src.core.db.game_worker import WorldState, WorldStateEngine
+from src.core.world_state_engine import WorldState, WorldStateEngine
 
 
 class GameEngineObject(QObject):
