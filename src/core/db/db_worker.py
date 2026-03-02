@@ -251,10 +251,13 @@ class DatabaseWorker:
         logging.info("Post Season Setup...")
         current_season = self.get_current_season()
 
+        do_age_increase = True
         if current_season:
+            # new season set up
             next_season_registrations = self.get_next_season_league_registrations()
-
         else:
+            # First season set up
+            do_age_increase = False
             club_copy = list(self.get_clubs())
             shuffle(club_copy)
 
@@ -266,6 +269,7 @@ class DatabaseWorker:
         # create next season
         next_season = self.create_next_season()
 
+        
         new_regs = list()
         for reg in next_season_registrations:
             if reg[1] is None:
@@ -302,6 +306,14 @@ class DatabaseWorker:
             if cup_regs:
                 self.session.add_all(cup_regs)
                 self.session.commit()
+
+        if do_age_increase:
+            logging.info("Processing age increase...")
+            people = self.get_people()
+            for p in people:
+                p.age += 1
+            self.session.commit()
+
 
     @timer
     def do_new_season(self):
