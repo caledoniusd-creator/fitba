@@ -302,12 +302,18 @@ class DatabaseWorker:
             self.session.add_all(new_regs)
             self.session.commit()
 
+        self.session.flush()
+
+        self.close_session()
+
         clubs_for_cup = []
-        for league in self.get_leagues():
-            clubs_for_cup.extend(league.get_clubs_for_season(next_season))
+        for lg in self.get_leagues():
+            lg_clubs = lg.get_clubs_for_season(next_season)
+            logging.info(f"adding {lg.required_teams} from {lg.name} for Cups # teams = {len(lg_clubs)}")
+            clubs_for_cup = clubs_for_cup + lg_clubs
 
         if clubs_for_cup:
-            logging.info("Do cup registration")
+            logging.info(f"Do cup registration #teams: {len(clubs_for_cup)}")
             cup_regs = []
             for cup in self.get_cups():
                 club_copy = list(clubs_for_cup)
