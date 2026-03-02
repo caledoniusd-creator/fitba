@@ -11,7 +11,7 @@ class StaffTreeWidget(TitledTreeWidget):
     def __init__(self, parent=None):
         super().__init__(title="Staff", parent=parent)
         self.tree.setHeaderLabels(
-            ["Role", "Name", "Ability", "Reputation", "Personality"]
+            ["Role", "Name", "Age", "Ability", "Reputation", "Personality"]
         )
 
     def set_staff(self, staff_list):
@@ -21,6 +21,7 @@ class StaffTreeWidget(TitledTreeWidget):
                 [
                     staff.role.name,
                     staff.person.full_name,
+                    str(staff.person.age),
                     str(staff.ability),
                     staff.reputation_type.name,
                     staff.person.personality.name,
@@ -32,7 +33,7 @@ class StaffTreeWidget(TitledTreeWidget):
 class PlayerTreeWidget(TitledTreeWidget):
     def __init__(self, parent=None):
         super().__init__(title="Players", parent=parent)
-        self.tree.setHeaderLabels(["Position", "Name", "Ability", "Personality"])
+        self.tree.setHeaderLabels(["Position", "Name", "Age", "Ability", "Personality"])
 
     def set_players(self, player_list):
         self.tree.clear()
@@ -41,6 +42,7 @@ class PlayerTreeWidget(TitledTreeWidget):
                 [
                     player.position.name,
                     player.person.full_name,
+                    str(player.person.age),
                     str(player.ability),
                     player.person.personality.name,
                 ]

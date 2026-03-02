@@ -13,6 +13,7 @@ from ..game_types import (
     ContractType,
     CompetitionType,
     Position,
+    MatchFormation
 )
 
 
@@ -107,6 +108,8 @@ class StaffDB(Base):
 
     ability: Mapped[int] = mapped_column(Integer)
 
+    prefered_formation: Mapped[MatchFormation] = mapped_column(SAEnum(MatchFormation))
+    
     # Reverse relationship
     person: Mapped[PersonDB] = relationship("PersonDB", back_populates="staff")
 

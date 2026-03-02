@@ -3,6 +3,11 @@ from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
+from src.core.game_types import (
+    StaffRole,
+    Position
+)
+
 from src.core.db.models import SeasonDB
 
 from .generic_widgets import TitleLabel, GeneralGamePage
@@ -24,6 +29,9 @@ class ClubWidget(GeneralGamePage):
         self._player_list = PlayerTreeWidget()
         self._comp_list = CompetitionListWidget()
 
+        self._sqaud_remarks = QLabel()
+
+
         person_frame = QFrame()
         person_frame.setFrameStyle(QFrame.StyledPanel | QFrame.Plain)
 
@@ -31,9 +39,13 @@ class ClubWidget(GeneralGamePage):
         left_layout.addWidget(self._staff_list)
         left_layout.addWidget(self._comp_list)
 
+        sqaud_layout = QVBoxLayout()
+        sqaud_layout.addWidget(self._player_list, 2)
+        sqaud_layout.addWidget(self._sqaud_remarks, 1)
+
         person_layout = QHBoxLayout(person_frame)
         person_layout.addLayout(left_layout)
-        person_layout.addWidget(self._player_list)
+        person_layout.addLayout(sqaud_layout)
 
         layout = QVBoxLayout(self)
         layout.addWidget(self._title, 0, Qt.AlignTop | Qt.AlignHCenter)
@@ -50,6 +62,59 @@ class ClubWidget(GeneralGamePage):
             self._club_id = club_id
             self.update_data()
     
+    def _analyse_squad(self, players):
+        if not players:
+            return "No Players ot analyse"
+        
+        text = []
+
+        num_players = len(players)
+        avg_ability = round(sum([p.ability for p in players]) / num_players, 2)
+
+        pos_map = {}
+        for p in players:
+            if p.position not in pos_map:
+                pos_map[p.position] = []
+            pos_map[p.position].append(p)
+
+        for v in pos_map.values():
+            v.sort(key=lambda x: x.ability, reverse=True)
+
+        best_players = [v[0] for v in pos_map.values()]
+        best_players.sort(key=lambda x: x.ability, reverse=True)
+        best_player = best_players[0]
+
+        text.append(f"# Players: {num_players} Avg Ability: {avg_ability}")
+    
+
+        def player_text(player):
+            return f"{player.person.short_name} ({player.person.age}) {player.ability}"
+        
+        text.append("Best Players:")
+        if Position.Goalkeeper in pos_map:
+            text.append(f" - GK: {player_text(pos_map[Position.Goalkeeper][0])}")
+        else:
+            text.append(" - No Goalkeeper!!!")
+
+        if Position.Defender in pos_map:
+            text.append(f" - DF: {player_text(pos_map[Position.Defender][0])}")
+        else:
+            text.append(" - No Defenders!!!")
+
+        if Position.Midfielder in pos_map:
+            text.append(f" - MF: {player_text(pos_map[Position.Midfielder][0])}")
+        else:
+            text.append(" - No Midfields!!!")
+
+        if Position.Attacker in pos_map:
+            text.append(f" - AT: {player_text(pos_map[Position.Attacker][0])}")
+        else:
+            text.append(" - No Attackers!!!")
+
+        text.append(f" - Overall: {player_text(best_player)} [{best_player.position.name}]")
+
+        return "\n".join(text)
+    
     def update_data(self):
         if self._club_id is not None:
             club = self.game_engine.db_worker.get_club(self._club_id)
@@ -57,16 +122,34 @@ class ClubWidget(GeneralGamePage):
             club = None
         
         if club is not None:
+
             season = self.game_engine.world_time[0]
+            players = club.players()
+
             self._title.setText(f"{club.name} ({club.id})")
             self._staff_list.set_staff(club.staff_members())
-            self._player_list.set_players(club.players())
+            self._player_list.set_players(players)
             self._comp_list.set_competitions(club.competitions(season=season))
+
+            text = self._analyse_squad(players)
+            manager = [s for s in club.staff_members() if s.role == StaffRole.Manager]
+            if manager:
+                manager = manager[0]
+                more_text = [
+                    f"Manager: {manager.person.full_name} ({manager.person.age})",
+                    f" - ability: {manager.ability}",
+                    f" - preferred formation: {manager.prefered_formation}"
+                ]
+            else:
+                more_text = ["No Manager!!!"]
+            text += "\n" + "\n".join(more_text)
+            self._sqaud_remarks.setText(text)
 
         else:
             self._title.setText(ClubWidget.DEFAULT_TITLE)
             self._staff_list.clear()
             self._player_list.clear()
             self._comp_list.clear()
+            self._sqaud_remarks.clear()
 
 

@@ -14,6 +14,7 @@ from src.core.game_types import (
     StaffRole,
     ContractType,
     CompetitionType,
+    MatchFormation,
 )
 
 from src.core.world_time import WEEKS_IN_YEAR
@@ -285,7 +286,6 @@ class DatabaseWorker:
         # create next season
         next_season = self.create_next_season()
 
-        
         new_regs = list()
         for reg in next_season_registrations:
             if reg[1] is None:
@@ -302,7 +302,7 @@ class DatabaseWorker:
             self.session.add_all(new_regs)
             self.session.commit()
 
-        self.session.flush()
+        # self.session.flush()
 
         self.close_session()
 
@@ -518,6 +518,7 @@ class DatabaseCreator(DatabaseWorker):
                     role=count_data[0],
                     reputation_type=ReputationLevel.random(),
                     ability=random_ability(),
+                    prefered_formation=MatchFormation.random()
                 )
                 all_staff.append((person, db_staff))
         self.session.add_all(all_persons)

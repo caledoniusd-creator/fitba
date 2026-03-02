@@ -89,3 +89,19 @@ class Position(Enum):
         if randint(1, prob) == prob:
             return Position.Goalkeeper
         return choice(Position.outfeild_positions())
+
+@unique
+class MatchFormation(Enum):
+    F321 = (3, 2, 1)
+    F312 = (3, 1, 2)
+    F222 = (2, 2, 2)
+    F213 = (2, 1, 3)
+    F231 = (2, 3, 1)
+
+    @staticmethod
+    def random():
+        return choice([f for f in MatchFormation])
+
+    def __str__(self):
+        return "-".join([str(v) for v in self.value])
+    
