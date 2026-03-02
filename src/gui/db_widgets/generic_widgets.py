@@ -6,6 +6,9 @@ from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
 
+from .game_engine_object import GameEngineObject
+
+
 class TitleLabel(QLabel):
     """
     Simple Label to act as title
@@ -141,3 +144,16 @@ class LogWindow(QTextEdit):
         # Append and keep view pinned to bottom
         self.append(msg)
         self.moveCursor(QTextCursor.End)
+
+
+class GeneralGamePage(QWidget):
+    def __init__(self, game_engine: GameEngineObject, parent=None):
+        super().__init__(parent=parent)
+        self._game_engine = game_engine
+
+    @property
+    def game_engine(self):
+        return self._game_engine
+
+    def update_data(self):
+        pass

@@ -56,6 +56,14 @@ class GameEngineObject(QObject):
 
     def close_state_engine(self):
         if self.state_engine:
+            # make sure any open database session is closed to avoid
+            # detached-object surprises later on and to release file locks
+            try:
+                self.state_engine.game_worker.close()
+            except Exception:
+                # be defensive: if something is wrong we still clear the
+                # reference so the engine can be garbage collected
+                pass
             self.state_engine = None
 
     def advance_game(self):

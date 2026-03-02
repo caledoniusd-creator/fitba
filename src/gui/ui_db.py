@@ -13,7 +13,11 @@ from src.core.world_state_engine import WorldState
 
 from src.gui.db_widgets.game_engine_object import GameEngineObject
 
-from src.gui.db_widgets.generic_widgets import TitleLabel, LogWindow
+from src.gui.db_widgets.generic_widgets import (
+    TitleLabel, 
+    LogWindow, 
+    GeneralGamePage
+)
 
 from src.gui.db_widgets.club_widget import ClubWidget
 
@@ -31,20 +35,9 @@ from .generic_widgets import BusyPage
 
 
 
-class GeneralPage(QWidget):
-    def __init__(self, game_engine: GameEngineObject, parent=None):
-        super().__init__(parent=parent)
-        self._game_engine = game_engine
-
-    @property
-    def game_engine(self):
-        return self._game_engine
-
-    def update_data(self):
-        pass
 
 
-class HomePage(GeneralPage):
+class HomePage(GeneralGamePage):
     def __init__(self, game_engine: GameEngineObject, parent=None):
         super().__init__(game_engine, parent=parent)
 
@@ -64,7 +57,7 @@ class HomePage(GeneralPage):
             self._league_views.update_leagues(leagues[0], leagues[1], season)
 
 
-class ClubPage(GeneralPage):
+class ClubPage(GeneralGamePage):
     def __init__(self, game_engine: GameEngineObject, parent=None):
         super().__init__(game_engine, parent=parent)
 
@@ -72,7 +65,7 @@ class ClubPage(GeneralPage):
         self._club_list.currentItemChanged.connect(self.on_current_item_changed)
         self._current_club = 0
 
-        self._club_widget = ClubWidget()
+        self._club_widget = ClubWidget(self.game_engine)
 
         layout = QHBoxLayout(self)
         layout.addWidget(self._club_list, 2)
@@ -88,11 +81,11 @@ class ClubPage(GeneralPage):
 
     def clear(self):
         self._club_list.clear()
-        self._club_widget.club = None
+        self._club_widget.club_id = None
 
     def update_club_data(self):
-        club = self.game_engine.db_worker.get_club(self._current_club)
-        self._club_widget.club = club
+        self._club_widget.club_id = self.current_club
+        self._club_widget.update_data()
 
     def update_data(self):
         print("Update date for ClubPage")
@@ -108,15 +101,14 @@ class ClubPage(GeneralPage):
             if self.current_club is not None:
                 self.update_club_data()
             else:
-                self._club_widget.club = None
+                self._club_widget.club_id = None
         else:
             self.clear()
-            self._club_widget.club = None
+            self._club_widget.club_id = None
 
     def on_current_item_changed(self, current, previous):
         data = current.data(Qt.UserRole)
-        text = current.text()
-        print(f"Club: {text}({data}) selected")
+        # print(f"Club: {current.text()}({data}) selected")
         self.current_club = data
         self.update_club_data()
 
@@ -210,7 +202,7 @@ class AwaitingContinueWidget(BaseGameWidget):
         print("Update date for AwaitingContinueWidget")
 
         for v in self._pages.values():
-            if isinstance(v, GeneralPage):
+            if isinstance(v, GeneralGamePage):
                 v.update_data()
 
 
@@ -547,7 +539,7 @@ class AppMainWindow(QMainWindow):
         self._main_view_stack = MainView()
         self.setCentralWidget(self._main_view_stack)
 
-        self._log_window = LogWindow()
+        self._log_window = LogWindow(pass_to_console=True)
 
         self._log_docked_widget = QDockWidget("Log")
         # self._log_docked_widget.setFeatures(QDockWidget.DockWidgetClosable | QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable)

@@ -98,7 +98,23 @@ class DatabaseWorker:
         return self.session.scalars(select(ClubDB)).all()
 
     def get_club(self, club_id: int):
-        return self.session.scalars(select(ClubDB).where(ClubDB.id == club_id)).first()
+        # load the club with its contracts and associated people/staff eagerly.
+        # this prevents DetachedInstanceError if the session is later closed
+        # while the returned object is still being used.
+        from sqlalchemy.orm import selectinload
+
+        from .models import ContractDB, PersonDB
+
+        stmt = (
+            select(ClubDB)
+            .options(
+                selectinload(ClubDB.contracts)
+                .selectinload(ContractDB.person)
+                .selectinload(PersonDB.staff)
+            )
+            .where(ClubDB.id == club_id)
+        )
+        return self.session.scalars(stmt).first()
 
     def get_competitions(self):
         return self.session.scalars(select(CompetitionDB)).all()

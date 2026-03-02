@@ -40,6 +40,9 @@ class GameDBWorker:
 
     def __init__(self, db_path: str | None = None):
         self._db_path = db_path or self.DEFAULT_DB_PATH
+        # keep a single worker instance so that sessions stay alive when
+        # objects returned by the API are still being used by the caller.
+        self._worker: DatabaseWorker | None = None
 
     def create_new_database(self, delete_existing: bool = True):
         logging.info(
@@ -51,33 +54,37 @@ class GameDBWorker:
 
     @property
     def worker(self):
-        return DatabaseWorker(db_path=self._db_path)
+        if self._worker is None:
+            self._worker = DatabaseWorker(db_path=self._db_path)
+        return self._worker
+
+    def close(self):
+        """Close any open session held by the cached worker."""
+        if self._worker:
+            self._worker.close_session()
+            self._worker = None
 
     def do_new_season(self):
         logging.info("Do new season setup...")
-        db_worker = DatabaseWorker(db_path=self._db_path)
-        db_worker.do_new_season()
+        self.worker.do_new_season()
 
     def process_end_of_season(self):
         logging.info("Process End of Season...")
-        db_worker = DatabaseWorker(db_path=self._db_path)
-        current_season = db_worker.get_current_season()
+        current_season = self.worker.get_current_season()
 
-        for league in db_worker.get_leagues_from_competitions():
+        for league in self.worker.get_leagues_from_competitions():
             league_data = get_league_table_data(league, current_season)
             logging.info(f"{'\n'.join(league_table_text(league_data))}")
 
-        db_worker.do_post_season_setup()
+        self.worker.do_post_season_setup()
 
     def current_date(self):
-        db_worker = DatabaseWorker(db_path=self._db_path)
-        current_season = db_worker.get_current_season()
-        current_week = db_worker.get_week(db_worker.get_current_week())
+        current_season = self.worker.get_current_season()
+        current_week = self.worker.get_week(self.worker.get_current_week())
         return current_season, current_week
 
     def current_fixtures(self):
-        db_worker = DatabaseWorker(db_path=self._db_path)
-        return db_worker.get_fixtures_for_current_week()
+        return self.worker.get_fixtures_for_current_week()
 
     def current_results(self):
         return self.worker.get_results_for_current_week()
