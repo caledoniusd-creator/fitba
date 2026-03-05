@@ -4,6 +4,9 @@ import logging
 from src.database_main import game_state_engine
 from src.gui.ui_db import run_db_gui_application
 
+from src.sandbox.game_result_sandbox import game_result_function
+
+
 
 if __name__ == "__main__":
     parser = ArgumentParser("Fitba")
@@ -13,7 +16,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.gui:
-        run_db_gui_application()
+        # run_db_gui_application()
+        game_result_function()
     else:
         logging.basicConfig(
             level=logging.DEBUG,

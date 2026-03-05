@@ -91,7 +91,7 @@ class PersonDB(Base):
 
     @property
     def short_name(self):
-        return f"{self.first_name[:1]}. {self.last_name}"
+        return f"{self.first_name[:1]}.{self.last_name}"
 
 
 class StaffDB(Base):

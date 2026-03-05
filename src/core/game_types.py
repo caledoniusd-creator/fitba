@@ -74,10 +74,10 @@ class CompetitionType(Enum):
 
 @unique
 class Position(Enum):
-    Goalkeeper = (1, "GK", "Goalkeeper")
-    Defender = (2, "DF", "Defender")
-    Midfielder = (3, "MD", "Midfielder")
-    Attacker = (4, "AT", "Attacker")
+    Goalkeeper = (1, "G", "Goalkeeper")
+    Defender = (2, "D", "Defender")
+    Midfielder = (3, "M", "Midfielder")
+    Attacker = (4, "A", "Attacker")
 
     @staticmethod
     def outfeild_positions():
@@ -89,7 +89,11 @@ class Position(Enum):
         if randint(1, prob) == prob:
             return Position.Goalkeeper
         return choice(Position.outfeild_positions())
-
+    
+    @property
+    def short_name(self):
+        return self.value[1]
+    
 @unique
 class MatchFormation(Enum):
     F321 = (3, 2, 1)
